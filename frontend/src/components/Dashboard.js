@@ -1,0 +1,545 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import axios from 'axios';
+
+const Dashboard = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [currentPage, setCurrentPage] = useState('overview');
+  const [stats, setStats] = useState(null);
+  const [recentEmails, setRecentEmails] = useState([]);
+  const [userProfile, setUserProfile] = useState(null);
+
+  // Mock user data - realistic cybersecurity professional
+  const mockUserProfile = {
+    name: "Sarah Mitchell",
+    email: "s.mitchell@techcorp.com",
+    company: "TechCorp Financial Services",
+    role: "Security Analyst",
+    avatar: "SM",
+    joinDate: "January 2024",
+    location: "New York, NY"
+  };
+
+  useEffect(() => {
+    // Fetch dashboard data
+    fetchDashboardData();
+    setUserProfile(mockUserProfile);
+    
+    // Set current page based on URL
+    const path = location.pathname.split('/')[2] || 'overview';
+    setCurrentPage(path);
+  }, [location]);
+
+  const fetchDashboardData = async () => {
+    try {
+      const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
+      
+      const [statsResponse, emailsResponse] = await Promise.all([
+        axios.get(`${backendUrl}/api/dashboard/stats`),
+        axios.get(`${backendUrl}/api/dashboard/recent-emails`)
+      ]);
+      
+      setStats(statsResponse.data);
+      setRecentEmails(emailsResponse.data.emails);
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      // Fallback to mock data
+      setStats({
+        phishing_caught: 23,
+        safe_emails: 1247,
+        potential_phishing: 12
+      });
+      setRecentEmails([
+        {
+          id: "1",
+          subject: "Urgent: Verify Your Account Details",
+          sender: "security@fake-bank.com",
+          time: "2 hours ago",
+          status: "phishing"
+        },
+        {
+          id: "2", 
+          subject: "Q4 Security Report - Review Required",
+          sender: "security-team@techcorp.com",
+          time: "4 hours ago",
+          status: "safe"
+        },
+        {
+          id: "3",
+          subject: "System Maintenance Notification",
+          sender: "admin@suspicious-domain.net",
+          time: "6 hours ago", 
+          status: "potential_phishing"
+        }
+      ]);
+    }
+  };
+
+  const navigationItems = [
+    { id: 'overview', icon: '📊', label: 'Dashboard Overview', path: '/dashboard' },
+    { id: 'analysis', icon: '🔍', label: 'Threat Analysis', path: '/dashboard/analysis', comingSoon: true },
+    { id: 'behavior', icon: '📈', label: 'Behavior Analysis', path: '/dashboard/behavior', comingSoon: true },
+    { id: 'reports', icon: '📋', label: 'Security Reports', path: '/dashboard/reports', comingSoon: true },
+    { id: 'intelligence', icon: '🧠', label: 'Threat Intelligence', path: '/dashboard/intelligence', comingSoon: true },
+    { id: 'team', icon: '👥', label: 'Team Overview', path: '/dashboard/team', comingSoon: true },
+    { id: 'profile', icon: '👤', label: 'User Profile', path: '/dashboard/profile' },
+    { id: 'settings', icon: '⚙️', label: 'Settings', path: '/dashboard/settings' }
+  ];
+
+  const handleNavigation = (item) => {
+    setCurrentPage(item.id);
+    navigate(item.path);
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'phishing': return 'bg-red-100 text-red-800 border-red-200';
+      case 'safe': return 'bg-green-100 text-green-800 border-green-200';
+      case 'potential_phishing': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'phishing': return '🚨';
+      case 'safe': return '✅';
+      case 'potential_phishing': return '⚠️';
+      default: return '📧';
+    }
+  };
+
+  const renderMainContent = () => {
+    if (currentPage === 'profile') {
+      return <ProfilePage userProfile={userProfile} />;
+    }
+    
+    if (currentPage === 'settings') {
+      return <SettingsPage />;
+    }
+    
+    if (navigationItems.find(item => item.id === currentPage)?.comingSoon) {
+      return <ComingSoonPage pageName={navigationItems.find(item => item.id === currentPage)?.label} />;
+    }
+
+    // Dashboard Overview
+    return (
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Security Dashboard</h1>
+            <p className="text-gray-600 mt-1">Welcome back, {userProfile?.name}</p>
+          </div>
+          <div className="flex items-center space-x-4">
+            <div className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
+              System Active
+            </div>
+            <div className="text-sm text-gray-500">
+              Last scan: 2 minutes ago
+            </div>
+          </div>
+        </div>
+
+        {/* Statistics Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Phishing Emails Caught</p>
+                <p className="text-3xl font-bold text-red-600">{stats?.phishing_caught || 0}</p>
+              </div>
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
+                <span className="text-red-600 text-2xl">🚨</span>
+              </div>
+            </div>
+            <div className="mt-4 flex items-center text-sm text-gray-500">
+              <span className="text-red-600 font-medium">↑ 12%</span>
+              <span className="ml-2">from last week</span>
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Safe Emails</p>
+                <p className="text-3xl font-bold text-green-600">{stats?.safe_emails || 0}</p>
+              </div>
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+                <span className="text-green-600 text-2xl">✅</span>
+              </div>
+            </div>
+            <div className="mt-4 flex items-center text-sm text-gray-500">
+              <span className="text-green-600 font-medium">↑ 8%</span>
+              <span className="ml-2">from last week</span>
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Potential Phishing</p>
+                <p className="text-3xl font-bold text-yellow-600">{stats?.potential_phishing || 0}</p>
+              </div>
+              <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center">
+                <span className="text-yellow-600 text-2xl">⚠️</span>
+              </div>
+            </div>
+            <div className="mt-4 flex items-center text-sm text-gray-500">
+              <span className="text-yellow-600 font-medium">↓ 3%</span>
+              <span className="ml-2">from last week</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Recent Emails */}
+        <div className="bg-white rounded-lg shadow-lg border border-gray-200">
+          <div className="p-6 border-b border-gray-200">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-semibold text-gray-900">Recent Email Scans</h2>
+              <button className="text-primary hover:text-primary-dark font-medium">
+                View All
+              </button>
+            </div>
+          </div>
+          <div className="divide-y divide-gray-200">
+            {recentEmails.map((email) => (
+              <div key={email.id} className="p-6 hover:bg-gray-50 transition-colors">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <div className="text-2xl">{getStatusIcon(email.status)}</div>
+                    <div>
+                      <h3 className="font-medium text-gray-900">{email.subject}</h3>
+                      <p className="text-sm text-gray-600">From: {email.sender}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-4">
+                    <span className={`px-3 py-1 text-xs font-medium rounded-full border ${getStatusColor(email.status)}`}>
+                      {email.status.replace('_', ' ').toUpperCase()}
+                    </span>
+                    <span className="text-sm text-gray-500">{email.time}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex">
+      {/* Sidebar */}
+      <div className={`${sidebarOpen ? 'w-64' : 'w-16'} bg-white shadow-lg transition-all duration-300 flex flex-col`}>
+        {/* Logo */}
+        <div className="p-6 border-b border-gray-200">
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-sm">A</span>
+            </div>
+            {sidebarOpen && (
+              <h1 className="text-xl font-bold text-gray-900">
+                <span className="text-primary">Aman</span>
+              </h1>
+            )}
+          </div>
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex-1 p-4">
+          <ul className="space-y-2">
+            {navigationItems.map((item) => (
+              <li key={item.id}>
+                <button
+                  onClick={() => handleNavigation(item)}
+                  className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
+                    currentPage === item.id
+                      ? 'bg-primary text-white'
+                      : 'text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  <span className="text-lg">{item.icon}</span>
+                  {sidebarOpen && (
+                    <>
+                      <span className="font-medium">{item.label}</span>
+                      {item.comingSoon && (
+                        <span className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded">
+                          Soon
+                        </span>
+                      )}
+                    </>
+                  )}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </nav>
+
+        {/* User Info */}
+        {sidebarOpen && (
+          <div className="p-4 border-t border-gray-200">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
+                <span className="text-gray-600 font-medium">{userProfile?.avatar}</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900 truncate">
+                  {userProfile?.name}
+                </p>
+                <p className="text-xs text-gray-500 truncate">
+                  {userProfile?.role}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Sidebar Toggle */}
+        <div className="p-4 border-t border-gray-200">
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="w-full flex items-center justify-center p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded"
+          >
+            <span className="text-lg">{sidebarOpen ? '◀' : '▶'}</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 p-8">
+        {renderMainContent()}
+      </div>
+
+      {/* Call to Action - Bottom Right */}
+      <div className="fixed bottom-6 right-6 z-50">
+        <button className="bg-primary hover:bg-primary-dark text-white font-semibold px-6 py-3 rounded-full shadow-lg transition-all hover:shadow-xl">
+          Quick Scan
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// Profile Page Component
+const ProfilePage = ({ userProfile }) => (
+  <div className="space-y-6">
+    <div className="flex justify-between items-center">
+      <h1 className="text-3xl font-bold text-gray-900">User Profile</h1>
+    </div>
+    
+    <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-8">
+      <div className="flex items-center space-x-6 mb-8">
+        <div className="w-24 h-24 bg-gray-300 rounded-full flex items-center justify-center">
+          <span className="text-gray-600 font-bold text-2xl">{userProfile?.avatar}</span>
+        </div>
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">{userProfile?.name}</h2>
+          <p className="text-gray-600">{userProfile?.role}</p>
+          <p className="text-sm text-gray-500 mt-1">Joined {userProfile?.joinDate}</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Contact Information</h3>
+          <div className="space-y-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Email</label>
+              <p className="text-gray-900">{userProfile?.email}</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Company</label>
+              <p className="text-gray-900">{userProfile?.company}</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Location</label>
+              <p className="text-gray-900">{userProfile?.location}</p>
+            </div>
+          </div>
+        </div>
+        
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Security Status</h3>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-700">Two-Factor Authentication</span>
+              <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">Enabled</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-700">Email Monitoring</span>
+              <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">Active</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-700">Threat Alerts</span>
+              <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">On</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+// Settings Page Component
+const SettingsPage = () => {
+  const [settings, setSettings] = useState({
+    emailNotifications: true,
+    threatAlerts: true,
+    weeklyReports: false,
+    scanSensitivity: 'medium',
+    language: 'english',
+    timezone: 'EST'
+  });
+
+  const handleSettingChange = (key, value) => {
+    setSettings(prev => ({ ...prev, [key]: value }));
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Account Settings */}
+        <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Account Settings</h2>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Change Password
+              </label>
+              <button className="btn-secondary text-sm">Update Password</button>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Two-Factor Authentication
+              </label>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">Add extra security to your account</span>
+                <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">Enabled</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Notification Settings */}
+        <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Notification Settings</h2>
+          <div className="space-y-4">
+            {[
+              { key: 'emailNotifications', label: 'Email Notifications', desc: 'Receive notifications via email' },
+              { key: 'threatAlerts', label: 'Threat Alerts', desc: 'Immediate alerts for phishing detection' },
+              { key: 'weeklyReports', label: 'Weekly Reports', desc: 'Summary of security activity' }
+            ].map((item) => (
+              <div key={item.key} className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-700">{item.label}</p>
+                  <p className="text-xs text-gray-500">{item.desc}</p>
+                </div>
+                <button
+                  onClick={() => handleSettingChange(item.key, !settings[item.key])}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    settings[item.key] ? 'bg-primary' : 'bg-gray-200'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      settings[item.key] ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Security Settings */}
+        <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Security Settings</h2>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Scan Sensitivity Level
+              </label>
+              <select
+                value={settings.scanSensitivity}
+                onChange={(e) => handleSettingChange('scanSensitivity', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+              >
+                <option value="low">Low - Fewer false positives</option>
+                <option value="medium">Medium - Balanced detection</option>
+                <option value="high">High - Maximum protection</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Quarantine Settings
+              </label>
+              <div className="text-sm text-gray-600">
+                Suspicious emails are automatically quarantined for 7 days
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Privacy Settings */}
+        <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Privacy & Language</h2>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Language Preference
+              </label>
+              <select
+                value={settings.language}
+                onChange={(e) => handleSettingChange('language', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+              >
+                <option value="english">English</option>
+                <option value="spanish">Spanish</option>
+                <option value="french">French</option>
+                <option value="german">German</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Data Sharing
+              </label>
+              <div className="text-sm text-gray-600">
+                Help improve threat detection by sharing anonymized data
+              </div>
+              <button className="mt-2 text-primary hover:text-primary-dark text-sm font-medium">
+                Manage Preferences
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Coming Soon Page Component
+const ComingSoonPage = ({ pageName }) => (
+  <div className="flex items-center justify-center h-96">
+    <div className="text-center">
+      <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+        <span className="text-4xl">🚧</span>
+      </div>
+      <h1 className="text-3xl font-bold text-gray-900 mb-4">{pageName}</h1>
+      <p className="text-xl text-gray-600 mb-8">
+        This feature is currently under development and will be available soon.
+      </p>
+      <div className="bg-primary text-white px-6 py-3 rounded-lg font-semibold inline-block">
+        Coming Soon ✨
+      </div>
+    </div>
+  </div>
+);
+
+export default Dashboard;
