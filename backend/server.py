@@ -1,13 +1,13 @@
 from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel, EmailStr
 from typing import Optional, List
 import os
 from dotenv import load_dotenv
 from datetime import datetime
 import uuid
+from database import connect_to_mongo, close_mongo_connection, get_database, init_collections
 
 load_dotenv()
 
@@ -25,10 +25,15 @@ app.add_middleware(
 # Security
 security = HTTPBearer()
 
-# MongoDB connection
-MONGO_URL = os.environ.get("MONGO_URL", "mongodb://localhost:27017")
-client = AsyncIOMotorClient(MONGO_URL)
-db = client.aman_db
+# Startup and shutdown events
+@app.on_event("startup")
+async def startup_event():
+    await connect_to_mongo()
+    await init_collections()
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    await close_mongo_connection()
 
 # Pydantic models
 class User(BaseModel):
