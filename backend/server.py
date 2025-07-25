@@ -595,11 +595,11 @@ async def submit_feedback(
         
         # Submit feedback using the feedback system
         feedback_result = await submit_scan_feedback(
-            user_id=current_user.id,
             scan_id=validated_data.get('scan_id'),
-            is_accurate=validated_data.get('is_accurate'),
-            feedback_type=validated_data.get('feedback_type'),
-            comments=validated_data.get('comments', '')
+            user_id=current_user.id,
+            is_correct=validated_data.get('is_accurate'),  # Map is_accurate to is_correct
+            suggested_risk_level=validated_data.get('suggested_risk_level'),
+            user_comment=validated_data.get('comments', '')
         )
         
         if not feedback_result.get('success'):
