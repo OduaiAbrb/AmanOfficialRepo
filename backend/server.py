@@ -527,7 +527,7 @@ async def scan_link(
     except Exception as e:
         logger.error(f"Link scan error: {e}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=500,
             detail="Link scan failed"
         )
 
