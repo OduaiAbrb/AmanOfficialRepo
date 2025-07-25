@@ -136,19 +136,53 @@ RISK LEVELS:
 
 Be precise, professional, and focus on actionable intelligence."""
 
-    async def analyze_email_content(self, email_data: Dict[str, Any]) -> AIThreatAnalysis:
-        """Analyze email content using Gemini AI"""
+    async def analyze_email_content(self, email_data: Dict[str, Any], user_id: str) -> AIThreatAnalysis:
+        """Analyze email content using Gemini AI with cost management"""
+        start_time = datetime.utcnow()
+        
         try:
+            # Check usage limits first
+            within_limits, usage_info = await check_ai_usage_limits(user_id)
+            if not within_limits:
+                logger.warning(f"AI usage limit exceeded for user {user_id}")
+                return self._create_fallback_analysis(
+                    email_data, 
+                    "Daily AI usage limit reached. Please try again tomorrow or upgrade your plan."
+                )
+            
             # Extract and sanitize email components
             subject = email_data.get('email_subject', '')
             body = email_data.get('email_body', '')
             sender = email_data.get('sender', '')
-            recipient = email_data.get('recipient', '')
             
             # Sanitize content for AI
             safe_subject = self.content_filter.sanitize_for_ai(subject, 200)
             safe_body = self.content_filter.sanitize_for_ai(body, 1500)
             safe_sender = self.content_filter.sanitize_for_ai(sender, 100)
+            
+            # Create cache key content
+            cache_content = f"email:{safe_subject}:{safe_body}:{safe_sender}"
+            
+            # Check cache first
+            cached_response = await get_cached_ai_response(cache_content, "gemini", self.model_name)
+            cache_hit = cached_response is not None
+            
+            if cached_response:
+                # Use cached response
+                analysis_result = self._parse_ai_response(cached_response.get("response", ""), email_data)
+                analysis_result.metadata["cache_hit"] = True
+                analysis_result.metadata["cost_saved"] = True
+                
+                # Record usage with cache hit
+                response_time = int((datetime.utcnow() - start_time).total_seconds() * 1000)
+                await record_ai_usage(
+                    user_id, "gemini", self.model_name, "email_scan",
+                    0, 0, response_time, cache_hit=True, 
+                    metadata={"cached": True}
+                )
+                
+                logger.info(f"Used cached AI email analysis for user {user_id}")
+                return analysis_result
             
             # Create analysis prompt
             analysis_prompt = f"""Analyze this email for phishing threats:
@@ -176,16 +210,42 @@ Provide detailed threat analysis in JSON format."""
             # Parse AI response
             analysis_result = self._parse_ai_response(ai_response, email_data)
             
-            # Store analysis in database for learning
-            await self._store_ai_analysis(analysis_result, email_data)
+            # Cache the response
+            await cache_ai_response(cache_content, "gemini", self.model_name, {
+                "response": ai_response,
+                "timestamp": datetime.utcnow().isoformat()
+            })
             
-            logger.info(f"AI email analysis completed: risk_score={analysis_result.risk_score}")
+            # Estimate token usage
+            input_tokens = len(analysis_prompt) // 4  # Rough estimate
+            output_tokens = len(ai_response) // 4
+            response_time = int((datetime.utcnow() - start_time).total_seconds() * 1000)
+            
+            # Record usage
+            await record_ai_usage(
+                user_id, "gemini", self.model_name, "email_scan",
+                input_tokens, output_tokens, response_time, 
+                cache_hit=False, metadata={"ai_powered": True}
+            )
+            
+            # Store analysis in database for learning
+            await self._store_ai_analysis(analysis_result, email_data, user_id)
+            
+            logger.info(f"AI email analysis completed for user {user_id}: risk_score={analysis_result.risk_score}")
             
             return analysis_result
             
         except Exception as e:
-            logger.error(f"AI email analysis failed: {e}")
-            # Return fallback analysis
+            logger.error(f"AI email analysis failed for user {user_id}: {e}")
+            response_time = int((datetime.utcnow() - start_time).total_seconds() * 1000)
+            
+            # Record failed usage
+            await record_ai_usage(
+                user_id, "gemini", self.model_name, "email_scan",
+                0, 0, response_time, cache_hit=False, 
+                metadata={"error": str(e)}
+            )
+            
             return self._create_fallback_analysis(email_data, str(e))
     
     async def analyze_link(self, url: str, context: str = "") -> AIThreatAnalysis:
