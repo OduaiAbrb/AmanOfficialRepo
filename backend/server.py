@@ -32,7 +32,7 @@ from models import (
     LinkScanRequest, LinkScanResponse, UserUpdate, UserSettings, ScanStatus
 )
 from auth import (
-    get_current_active_user, create_access_token, create_refresh_token, decode_refresh_token,
+    get_current_active_user, create_access_token, create_refresh_token,
     authenticate_user, create_user, create_token_response,
     verify_token, get_user_by_id, update_user_last_login
 )
