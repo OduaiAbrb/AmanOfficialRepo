@@ -3,7 +3,7 @@ Aman Cybersecurity Platform - Secure Backend API
 Comprehensive FastAPI backend with JWT authentication, security middleware, and real database operations
 """
 
-from fastapi import FastAPI, HTTPException, Depends, Request, BackgroundTasks
+from fastapi import FastAPI, HTTPException, Depends, Request, BackgroundTasks, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from slowapi import Limiter
