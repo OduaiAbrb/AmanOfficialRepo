@@ -560,56 +560,106 @@ const ProfilePage = ({ user }) => {
 
 // Settings Page Component
 const SettingsPage = () => {
+  const { getUserSettings, updateUserSettings } = useAuth();
   const [settings, setSettings] = useState({
-    emailNotifications: true,
-    threatAlerts: true,
-    weeklyReports: false,
-    scanSensitivity: 'medium',
-    language: 'english',
-    timezone: 'EST'
+    email_notifications: true,
+    real_time_scanning: true,
+    block_suspicious_links: false,
+    scan_attachments: true,
+    share_threat_intelligence: true
   });
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState('');
 
-  const handleSettingChange = (key, value) => {
-    setSettings(prev => ({ ...prev, [key]: value }));
+  useEffect(() => {
+    loadSettings();
+  }, []);
+
+  const loadSettings = async () => {
+    setLoading(true);
+    const result = await getUserSettings();
+    
+    if (result.success) {
+      setSettings(result.settings);
+    } else {
+      setMessage('Failed to load settings');
+    }
+    
+    setLoading(false);
   };
+
+  const handleSettingChange = async (key, value) => {
+    const newSettings = { ...settings, [key]: value };
+    setSettings(newSettings);
+    
+    setSaving(true);
+    setMessage('');
+    
+    const result = await updateUserSettings(newSettings);
+    
+    if (result.success) {
+      setMessage('Settings saved successfully!');
+      setTimeout(() => setMessage(''), 3000);
+    } else {
+      setMessage(result.error || 'Failed to save settings');
+      // Revert the setting
+      setSettings(settings);
+    }
+    
+    setSaving(false);
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading settings...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
+        {saving && (
+          <div className="flex items-center text-sm text-gray-600">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary mr-2"></div>
+            Saving...
+          </div>
+        )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Account Settings */}
-        <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Account Settings</h2>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Change Password
-              </label>
-              <button className="btn-secondary text-sm">Update Password</button>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Two-Factor Authentication
-              </label>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Add extra security to your account</span>
-                <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">Enabled</span>
-              </div>
-            </div>
-          </div>
+      {message && (
+        <div className={`p-4 rounded-md ${message.includes('success') ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+          {message}
         </div>
+      )}
 
-        {/* Notification Settings */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Security Settings */}
         <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Notification Settings</h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Security Settings</h2>
           <div className="space-y-4">
             {[
-              { key: 'emailNotifications', label: 'Email Notifications', desc: 'Receive notifications via email' },
-              { key: 'threatAlerts', label: 'Threat Alerts', desc: 'Immediate alerts for phishing detection' },
-              { key: 'weeklyReports', label: 'Weekly Reports', desc: 'Summary of security activity' }
+              { 
+                key: 'real_time_scanning', 
+                label: 'Real-time Email Scanning', 
+                desc: 'Automatically scan emails as they arrive' 
+              },
+              { 
+                key: 'block_suspicious_links', 
+                label: 'Block Suspicious Links', 
+                desc: 'Automatically block access to dangerous links' 
+              },
+              { 
+                key: 'scan_attachments', 
+                label: 'Scan Email Attachments', 
+                desc: 'Check attachments for malware and threats' 
+              }
             ].map((item) => (
               <div key={item.key} className="flex items-center justify-between">
                 <div>
@@ -618,7 +668,8 @@ const SettingsPage = () => {
                 </div>
                 <button
                   onClick={() => handleSettingChange(item.key, !settings[item.key])}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  disabled={saving}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors disabled:opacity-50 ${
                     settings[item.key] ? 'bg-primary' : 'bg-gray-200'
                   }`}
                 >
@@ -633,64 +684,76 @@ const SettingsPage = () => {
           </div>
         </div>
 
-        {/* Security Settings */}
+        {/* Notification Settings */}
         <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Security Settings</h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Notification Settings</h2>
           <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Scan Sensitivity Level
-              </label>
-              <select
-                value={settings.scanSensitivity}
-                onChange={(e) => handleSettingChange('scanSensitivity', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-              >
-                <option value="low">Low - Fewer false positives</option>
-                <option value="medium">Medium - Balanced detection</option>
-                <option value="high">High - Maximum protection</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Quarantine Settings
-              </label>
-              <div className="text-sm text-gray-600">
-                Suspicious emails are automatically quarantined for 7 days
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-700">Email Notifications</p>
+                <p className="text-xs text-gray-500">Receive security alerts via email</p>
               </div>
+              <button
+                onClick={() => handleSettingChange('email_notifications', !settings.email_notifications)}
+                disabled={saving}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors disabled:opacity-50 ${
+                  settings.email_notifications ? 'bg-primary' : 'bg-gray-200'
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    settings.email_notifications ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
             </div>
           </div>
         </div>
 
         {/* Privacy Settings */}
         <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Privacy & Language</h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Privacy Settings</h2>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-700">Share Threat Intelligence</p>
+                <p className="text-xs text-gray-500">Help improve security by sharing anonymized threat data</p>
+              </div>
+              <button
+                onClick={() => handleSettingChange('share_threat_intelligence', !settings.share_threat_intelligence)}
+                disabled={saving}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors disabled:opacity-50 ${
+                  settings.share_threat_intelligence ? 'bg-primary' : 'bg-gray-200'
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    settings.share_threat_intelligence ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Account Settings */}
+        <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Account Settings</h2>
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Language Preference
+                Change Password
               </label>
-              <select
-                value={settings.language}
-                onChange={(e) => handleSettingChange('language', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-              >
-                <option value="english">English</option>
-                <option value="spanish">Spanish</option>
-                <option value="french">French</option>
-                <option value="german">German</option>
-              </select>
+              <button className="btn-secondary text-sm">Update Password</button>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Data Sharing
+                Account Security
               </label>
-              <div className="text-sm text-gray-600">
-                Help improve threat detection by sharing anonymized data
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">Two-factor authentication</span>
+                <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">Recommended</span>
               </div>
-              <button className="mt-2 text-primary hover:text-primary-dark text-sm font-medium">
-                Manage Preferences
-              </button>
             </div>
           </div>
         </div>
