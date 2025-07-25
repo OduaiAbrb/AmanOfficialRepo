@@ -27,13 +27,13 @@ API_BASE = f"{BACKEND_URL}/api"
 
 class AITestUser:
     """Test user for AI cost management testing"""
-    def __init__(self, email: str, password: str = "TestPass123!", name: str = "AI Test User"):
+    def __init__(self, email: str, password: str = "TestPass123!", name: str = "AI Test User", organization: str = "AI Testing Corp"):
         self.email = email
         self.password = password
         self.name = name
+        self.organization = organization
         self.token = None
         self.user_id = None
-        self.organization = "AI Testing Corp"
 
 class AICostManagementTester:
     """Comprehensive AI Cost Management Testing Suite"""
