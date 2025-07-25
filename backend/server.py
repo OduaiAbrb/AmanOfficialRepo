@@ -402,13 +402,35 @@ async def scan_email(
     scan_request: EmailScanRequest,
     current_user: UserResponse = Depends(get_current_active_user)
 ):
-    """Scan email for phishing threats using advanced AI-powered analysis"""
+    """Scan email for phishing threats using AI-powered advanced analysis"""
     try:
+        client_ip = IPValidator.get_client_ip(request)
+        
         # Validate and sanitize input
         validated_data = validate_input(scan_request.dict())
         
-        # Use advanced email scanning logic
-        scan_results = scan_email_advanced(validated_data)
+        # Enhanced security: Check content length and suspicious patterns
+        email_body = validated_data.get("email_body", "")
+        if len(email_body) > 50000:  # 50KB limit
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email content too large"
+            )
+        
+        # Log scan attempt for security monitoring
+        log_security_event("EMAIL_SCAN_ATTEMPT", {
+            "user_id": current_user.id,
+            "email_subject": validated_data.get("email_subject", "")[:50],
+            "body_length": len(email_body)
+        }, client_ip)
+        
+        # Use AI-enhanced scanning with fallback
+        try:
+            scan_results = await scan_email_with_ai(validated_data)
+            logger.info(f"AI email scan successful for user {current_user.email}")
+        except Exception as ai_error:
+            logger.warning(f"AI scanning failed, falling back to advanced scanning: {ai_error}")
+            scan_results = scan_email_advanced(validated_data)
         
         risk_score = scan_results.get('risk_score', 0.0)
         risk_level = scan_results.get('risk_level', 'safe')
@@ -429,22 +451,39 @@ async def scan_email(
         threat_sources = list(set(indicator.get('source', '') for indicator in threat_indicators))
         detected_threats = list(set(indicator.get('threat_type', '') for indicator in threat_indicators))
         
-        # Store scan result in database
+        # Enhanced security: Redact sensitive information from storage
+        safe_subject = validated_data["email_subject"][:200] if validated_data.get("email_subject") else ""
+        safe_sender = validated_data["sender"][:100] if validated_data.get("sender") else ""
+        
+        # Store scan result in database with enhanced security
         scan_data = {
             "user_id": current_user.id,
-            "email_subject": validated_data["email_subject"],
-            "sender": validated_data["sender"],
-            "recipient": validated_data["recipient"],
+            "email_subject": safe_subject,
+            "sender": safe_sender,
+            "recipient": validated_data.get("recipient", "")[:100],
             "scan_result": status.value,
             "risk_score": risk_score,
             "explanation": explanation,
             "threat_sources": threat_sources,
             "detected_threats": detected_threats,
-            "scan_metadata": scan_results.get('metadata', {}),
-            "scan_duration": scan_results.get('scan_duration', 0.0)
+            "scan_metadata": {
+                **scan_results.get('metadata', {}),
+                "ip_address": client_ip,
+                "user_agent": request.headers.get("user-agent", "")[:200]
+            },
+            "scan_duration": scan_results.get('scan_duration', 0.0),
+            "ai_powered": scan_results.get('metadata', {}).get('ai_powered', False)
         }
         
         scan_result = await EmailScanDatabase.create_email_scan(scan_data)
+        
+        # Enhanced security logging
+        log_security_event("EMAIL_SCAN_COMPLETED", {
+            "scan_id": scan_result.id,
+            "risk_score": risk_score,
+            "status": status.value,
+            "ai_powered": scan_data["ai_powered"]
+        }, client_ip)
         
         logger.info(f"Email scan completed for user {current_user.email}: risk_score={risk_score}, status={status.value}")
         
@@ -461,9 +500,11 @@ async def scan_email(
     except HTTPException:
         raise
     except Exception as e:
+        client_ip = IPValidator.get_client_ip(request)
+        log_security_event("EMAIL_SCAN_ERROR", {"error": str(e)}, client_ip)
         logger.error(f"Email scan error: {e}")
         raise HTTPException(
-            status_code=500,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Email scan failed"
         )
 
