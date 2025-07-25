@@ -30,13 +30,33 @@ const Dashboard = () => {
       return;
     }
     
-    // Fetch dashboard data
+    // Fetch initial dashboard data
     fetchDashboardData();
     
     // Set current page based on URL
     const path = location.pathname.split('/')[2] || 'overview';
     setCurrentPage(path);
   }, [location, isAuthenticated, navigate]);
+
+  // Update stats when real-time data is received
+  useEffect(() => {
+    if (realtimeStats) {
+      setStats(prevStats => ({
+        ...prevStats,
+        phishing_emails_caught: realtimeStats.threats_blocked || 0,
+        emails_scanned: realtimeStats.today_scans || 0,
+        potential_phishing: Math.max(0, (realtimeStats.today_scans || 0) - (realtimeStats.threats_blocked || 0)),
+        avg_risk_score: realtimeStats.avg_risk_score || 0
+      }));
+      
+      // Update recent emails from real-time data
+      if (realtimeStats.recent_scans) {
+        setRecentEmails(realtimeStats.recent_scans);
+      }
+      
+      setLoading(false);
+    }
+  }, [realtimeStats]);
 
   const fetchDashboardData = async () => {
     try {
