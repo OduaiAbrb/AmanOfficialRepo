@@ -374,6 +374,7 @@ function createSecurityBadge(result) {
   
   const color = colors[result.riskLevel] || colors.safe;
   
+  // Enhanced badge with AI indicator
   badge.innerHTML = `
     <div style="
       display: flex;
@@ -389,21 +390,43 @@ function createSecurityBadge(result) {
       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     ">
       <span style="margin-right: 8px; font-size: 14px;">${color.icon}</span>
-      <div>
-        <div style="font-weight: 600; margin-bottom: 2px;">
-          Aman Security: ${result.riskLevel.toUpperCase()}
+      <div style="flex-grow: 1;">
+        <div style="font-weight: 600; margin-bottom: 2px; display: flex; align-items: center; gap: 6px;">
+          <span>Aman Security: ${result.riskLevel.toUpperCase()}</span>
+          ${result.aiPowered ? 
+            '<span style="background: #8b5cf6; color: white; font-size: 9px; padding: 2px 4px; border-radius: 3px; font-weight: 500;">AI</span>' : 
+            ''
+          }
+          ${result.fallback ? 
+            '<span style="background: #6b7280; color: white; font-size: 9px; padding: 2px 4px; border-radius: 3px; font-weight: 500;">LOCAL</span>' : 
+            ''
+          }
         </div>
-        <div style="font-size: 11px; opacity: 0.8;">
+        <div style="font-size: 11px; opacity: 0.8; margin-bottom: 4px;">
           ${result.explanation}
         </div>
-        ${result.threats.length > 0 ? `
-          <div style="font-size: 11px; margin-top: 4px;">
-            Threats: ${result.threats.join(', ')}
+        ${result.threats && result.threats.length > 0 ? `
+          <div style="font-size: 11px; margin-bottom: 4px;">
+            <strong>Threats:</strong> ${result.threats.slice(0, 3).join(', ')}${result.threats.length > 3 ? '...' : ''}
+          </div>
+        ` : ''}
+        ${result.threatSources && result.threatSources.length > 0 ? `
+          <div style="font-size: 10px; opacity: 0.7;">
+            Sources: ${result.threatSources.slice(0, 2).join(', ')}
+          </div>
+        ` : ''}
+        ${result.recommendations && result.recommendations.length > 0 && result.riskLevel !== 'safe' ? `
+          <div style="font-size: 10px; margin-top: 4px; padding: 4px; background: rgba(255,255,255,0.5); border-radius: 3px;">
+            💡 ${result.recommendations[0]}
           </div>
         ` : ''}
       </div>
-      <div style="margin-left: auto; font-size: 11px; opacity: 0.7;">
-        Risk: ${result.riskScore}%
+      <div style="text-align: right; font-size: 11px; opacity: 0.7;">
+        <div>Risk: ${result.riskScore}%</div>
+        ${result.aiPowered ? 
+          '<div style="font-size: 9px; margin-top: 2px;">AI Powered</div>' : 
+          ''
+        }
       </div>
     </div>
   `;
