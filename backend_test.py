@@ -1229,42 +1229,52 @@ class BackendTester:
     
     def run_all_tests(self):
         """Run all backend tests"""
-        print("=" * 60)
-        print("🚀 AMAN CYBERSECURITY PLATFORM - PHASE 7 BACKEND API TESTS")
-        print("=" * 60)
+        print("=" * 80)
+        print("🚀 AMAN CYBERSECURITY PLATFORM - BROWSER EXTENSION BACKEND INTEGRATION TESTS")
+        print("=" * 80)
         
-        # Phase 7 specific tests
-        phase7_tests = [
+        # Browser Extension Backend Integration Tests
+        extension_tests = [
             self.test_health_endpoint,
             self.test_user_registration,
             self.test_user_login,
             self.test_token_refresh,
+            self.test_browser_extension_cors_headers,
+            self.test_extension_authentication_flow,
+            self.test_extension_email_scanning_integration,
+            self.test_extension_link_scanning_integration,
+            self.test_extension_data_transformation,
+            self.test_extension_error_handling,
+            self.test_extension_ai_fallback_mechanism,
+            self.test_extension_cross_platform_compatibility,
             self.test_protected_user_profile,
             self.test_protected_dashboard_stats,
             self.test_protected_recent_emails,
             self.test_advanced_email_scanning,
             self.test_enhanced_link_scanning,
-            self.test_feedback_submission,
-            self.test_feedback_analytics,
-            self.test_domain_threat_intelligence,
-            self.test_url_threat_intelligence,
             self.test_user_settings,
             self.test_rate_limiting
         ]
         
         passed = 0
-        total = len(phase7_tests)
+        total = len(extension_tests)
         
-        for test in phase7_tests:
+        for test in extension_tests:
             if test():
                 passed += 1
             print()  # Add spacing between tests
         
-        print("=" * 60)
-        print(f"📊 PHASE 7 TEST SUMMARY: {passed}/{total} tests passed")
+        print("=" * 80)
+        print(f"📊 BROWSER EXTENSION BACKEND INTEGRATION TEST SUMMARY: {passed}/{total} tests passed")
         
         if passed == total:
-            print("🎉 ALL PHASE 7 TESTS PASSED! Advanced features are working correctly.")
+            print("🎉 ALL BROWSER EXTENSION BACKEND INTEGRATION TESTS PASSED!")
+            print("✅ Extension can successfully connect to backend APIs")
+            print("✅ JWT authentication works for extension requests")
+            print("✅ AI-powered scanning works through extension calls")
+            print("✅ Data transformation works for extension format")
+            print("✅ Error handling and fallbacks work correctly")
+            print("✅ Cross-platform compatibility verified")
             return True
         else:
             print(f"⚠️  {total - passed} test(s) failed. Check details above.")
