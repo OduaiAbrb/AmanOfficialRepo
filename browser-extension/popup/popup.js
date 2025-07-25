@@ -79,11 +79,18 @@ function setupEventListeners() {
 function loadExtensionData() {
     console.log('Loading extension data...');
     
-    // Load settings
+    // Load settings and auth status
     chrome.runtime.sendMessage({ action: 'getSettings' }, (response) => {
         if (response && response.success) {
             currentSettings = response.settings;
             updateUI();
+        }
+    });
+    
+    // Check authentication status
+    chrome.runtime.sendMessage({ action: 'getAuthStatus' }, (response) => {
+        if (response && response.success) {
+            updateAuthUI(response.authenticated, response.userEmail);
         }
     });
     
@@ -92,6 +99,65 @@ function loadExtensionData() {
         scanResults = result.scanResults || [];
         updateStats();
         updateActivity();
+    });
+}
+
+function updateAuthUI(isAuthenticated, userEmail) {
+    const authSection = document.getElementById('authSection');
+    const statsSection = document.querySelector('.stats-section');
+    
+    if (!authSection) {
+        // Create auth section if it doesn't exist
+        const authDiv = document.createElement('div');
+        authDiv.id = 'authSection';
+        authDiv.className = 'auth-section';
+        
+        if (isAuthenticated) {
+            authDiv.innerHTML = `
+                <div class="auth-status authenticated">
+                    <div class="auth-icon">✓</div>
+                    <div>
+                        <div class="auth-title">Authenticated</div>
+                        <div class="auth-email">${userEmail || 'User'}</div>
+                    </div>
+                </div>
+            `;
+        } else {
+            authDiv.innerHTML = `
+                <div class="auth-status not-authenticated">
+                    <div class="auth-icon">⚠</div>
+                    <div>
+                        <div class="auth-title">Login Required</div>
+                        <div class="auth-message">Log in for AI-powered protection</div>
+                    </div>
+                    <button class="auth-btn" id="loginBtn">Login</button>
+                </div>
+            `;
+            
+            // Add login button listener
+            setTimeout(() => {
+                const loginBtn = document.getElementById('loginBtn');
+                if (loginBtn) {
+                    loginBtn.addEventListener('click', handleLogin);
+                }
+            }, 100);
+        }
+        
+        // Insert after header
+        const header = document.querySelector('.header');
+        header.parentNode.insertBefore(authDiv, statsSection);
+    }
+    
+    // Update stats visibility based on auth
+    if (statsSection) {
+        statsSection.style.opacity = isAuthenticated ? '1' : '0.5';
+    }
+}
+
+function handleLogin() {
+    // Open login page
+    chrome.tabs.create({ 
+        url: 'https://30cbd4d9-b4c7-4721-ba22-5b885cf844b0.preview.emergentagent.com/auth'
     });
 }
 
