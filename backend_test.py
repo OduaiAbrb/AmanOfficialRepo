@@ -522,9 +522,8 @@ class BackendTester:
             # Submit feedback
             feedback_data = {
                 "scan_id": scan_id,
-                "is_accurate": True,
-                "feedback_type": "correct_detection",
-                "comments": "The scan result was accurate and helpful"
+                "is_correct": True,
+                "user_comment": "The scan result was accurate and helpful"
             }
             
             response = requests.post(
