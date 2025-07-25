@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 const LandingPage = () => {
+  const { isAuthenticated, user } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -40,9 +43,15 @@ const LandingPage = () => {
               <a href="#team" className="text-gray-600 hover:text-primary transition-colors">Team</a>
               <a href="#contact" className="text-gray-600 hover:text-primary transition-colors">Contact</a>
             </div>
-            <a href="/dashboard" className="btn-primary">
-              Dashboard
-            </a>
+            {isAuthenticated ? (
+              <Link to="/dashboard" className="btn-primary">
+                Dashboard
+              </Link>
+            ) : (
+              <Link to="/auth" className="btn-primary">
+                Get Started
+              </Link>
+            )}
           </div>
         </div>
       </nav>
@@ -60,18 +69,31 @@ const LandingPage = () => {
                 Aman provides real-time phishing detection and protection specifically designed for SMEs in regulated sectors like finance, insurance, and healthcare.
               </p>
               <div className="mt-8 flex flex-col sm:flex-row gap-4">
-                <a href="#contact" className="btn-primary text-center">
-                  Request Demo
-                </a>
-                <a href="#how-it-works" className="btn-secondary text-center">
-                  Learn More
-                </a>
+                {isAuthenticated ? (
+                  <>
+                    <Link to="/dashboard" className="btn-primary text-center">
+                      Go to Dashboard
+                    </Link>
+                    <a href="#how-it-works" className="btn-secondary text-center">
+                      Learn More
+                    </a>
+                  </>
+                ) : (
+                  <>
+                    <Link to="/auth" className="btn-primary text-center">
+                      Get Started Free
+                    </Link>
+                    <a href="#contact" className="btn-secondary text-center">
+                      Request Demo
+                    </a>
+                  </>
+                )}
               </div>
               <div className="mt-8 flex items-center text-sm text-gray-500">
                 <svg className="w-5 h-5 text-primary mr-2" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
-                Trusted by regulated businesses worldwide
+                {isAuthenticated ? `Welcome back, ${user?.name}` : 'Trusted by regulated businesses worldwide'}
               </div>
             </div>
             <div className="relative">
