@@ -60,24 +60,33 @@ class BackendTester:
         })
     
     def test_health_endpoint(self):
-        """Test GET /api/health endpoint"""
+        """Test GET /api/health endpoint - Enhanced with system checks"""
         try:
             response = requests.get(f"{self.backend_url}/health", timeout=10)
             
             if response.status_code == 200:
                 data = response.json()
-                if 'status' in data and data['status'] == 'healthy':
-                    self.log_result("Health Check", True, f"Status: {data.get('status')}, Service: {data.get('service', 'N/A')}")
-                    return True
+                required_fields = ['status', 'service', 'version', 'timestamp', 'checks']
+                
+                if all(field in data for field in required_fields):
+                    # Check if system checks are present
+                    checks = data.get('checks', {})
+                    if 'database' in checks and 'api' in checks:
+                        self.log_result("Enhanced Health Check", True, 
+                                      f"Status: {data['status']}, DB: {checks['database']}, API: {checks['api']}")
+                        return True
+                    else:
+                        self.log_result("Enhanced Health Check", False, "Missing system checks in response")
+                        return False
                 else:
-                    self.log_result("Health Check", False, f"Invalid response format: {data}")
+                    self.log_result("Enhanced Health Check", False, f"Missing required fields: {required_fields}")
                     return False
             else:
-                self.log_result("Health Check", False, f"HTTP {response.status_code}: {response.text}")
+                self.log_result("Enhanced Health Check", False, f"HTTP {response.status_code}: {response.text}")
                 return False
                 
         except requests.exceptions.RequestException as e:
-            self.log_result("Health Check", False, f"Request failed: {str(e)}")
+            self.log_result("Enhanced Health Check", False, f"Request failed: {str(e)}")
             return False
     
     def test_dashboard_stats(self):
