@@ -401,24 +401,32 @@ async def scan_email(
     scan_request: EmailScanRequest,
     current_user: UserResponse = Depends(get_current_active_user)
 ):
-    """Scan email for phishing threats - placeholder for AI integration"""
+    """Scan email for phishing threats using advanced AI-powered analysis"""
     try:
         # Validate and sanitize input
         validated_data = validate_input(scan_request.dict())
         
-        # Placeholder scanning logic (will be replaced with AI integration)
-        risk_score = await _analyze_email_content(validated_data)
+        # Use advanced email scanning logic
+        scan_results = scan_email_advanced(validated_data)
         
-        # Determine status based on risk score
-        if risk_score >= 80:
+        risk_score = scan_results.get('risk_score', 0.0)
+        risk_level = scan_results.get('risk_level', 'safe')
+        
+        # Map risk_level to ScanStatus
+        if risk_level == "phishing":
             status = ScanStatus.PHISHING
-            explanation = "High risk phishing attempt detected with multiple threat indicators"
-        elif risk_score >= 40:
+        elif risk_level == "potential_phishing":
             status = ScanStatus.POTENTIAL_PHISHING
-            explanation = "Potentially suspicious email content detected"
         else:
             status = ScanStatus.SAFE
-            explanation = "Email appears safe with no major threat indicators"
+        
+        explanation = scan_results.get('explanation', 'No explanation available')
+        recommendations = scan_results.get('recommendations', [])
+        threat_indicators = scan_results.get('threat_indicators', [])
+        
+        # Extract threat sources and detected threats from indicators
+        threat_sources = list(set(indicator.get('source', '') for indicator in threat_indicators))
+        detected_threats = list(set(indicator.get('threat_type', '') for indicator in threat_indicators))
         
         # Store scan result in database
         scan_data = {
@@ -429,20 +437,24 @@ async def scan_email(
             "scan_result": status.value,
             "risk_score": risk_score,
             "explanation": explanation,
-            "threat_sources": [],
-            "detected_threats": []
+            "threat_sources": threat_sources,
+            "detected_threats": detected_threats,
+            "scan_metadata": scan_results.get('metadata', {}),
+            "scan_duration": scan_results.get('scan_duration', 0.0)
         }
         
         scan_result = await EmailScanDatabase.create_email_scan(scan_data)
+        
+        logger.info(f"Email scan completed for user {current_user.email}: risk_score={risk_score}, status={status.value}")
         
         return EmailScanResponse(
             id=scan_result.id,
             status=status,
             risk_score=risk_score,
             explanation=explanation,
-            threat_sources=[],
-            detected_threats=[],
-            recommendations=_generate_recommendations(status, risk_score)
+            threat_sources=threat_sources,
+            detected_threats=detected_threats,
+            recommendations=recommendations
         )
         
     except HTTPException:
