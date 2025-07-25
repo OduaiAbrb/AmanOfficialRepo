@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """
-Backend API Testing Suite for Aman Cybersecurity Platform
-Tests all backend endpoints to ensure proper functionality
+Backend API Testing Suite for Aman Cybersecurity Platform - Phase 6 Security Testing
+Tests all backend endpoints including new authentication, security features, and protected routes
 """
 
 import requests
 import json
 import sys
 import os
+import time
 from datetime import datetime
 
 # Get backend URL from frontend environment
