@@ -23,6 +23,7 @@ class ThreatSource(str, Enum):
     IMAGE = "image"
     FILE = "file"
     SENDER = "sender"
+    SUBJECT = "subject"
 
 class UserRole(str, Enum):
     USER = "user"
