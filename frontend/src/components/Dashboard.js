@@ -340,16 +340,25 @@ const Dashboard = () => {
           <div className="p-4 border-t border-gray-200">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
-                <span className="text-gray-600 font-medium">{userProfile?.avatar}</span>
+                <span className="text-gray-600 font-medium">
+                  {user?.name ? user.name.split(' ').map(n => n[0]).join('').toUpperCase() : 'U'}
+                </span>
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-900 truncate">
-                  {userProfile?.name}
+                  {user?.name || 'User'}
                 </p>
                 <p className="text-xs text-gray-500 truncate">
-                  {userProfile?.role}
+                  {user?.organization || 'Organization'}
                 </p>
               </div>
+              <button
+                onClick={handleLogout}
+                className="text-gray-400 hover:text-red-600 transition-colors"
+                title="Logout"
+              >
+                🚪
+              </button>
             </div>
           </div>
         )}
