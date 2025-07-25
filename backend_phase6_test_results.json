@@ -1,84 +1,84 @@
 {
-  "timestamp": "2025-07-25T01:02:21.454821",
+  "timestamp": "2025-07-25T01:03:51.260019",
   "backend_url": "https://4ec11e88-5adb-422f-8d39-cfb44f6f0f9a.preview.emergentagent.com/api",
   "phase": "Phase 6 - Secure Backend API Development",
   "results": [
     {
       "test": "Enhanced Health Check",
-      "success": false,
-      "details": "HTTP 500: Internal Server Error",
-      "timestamp": "2025-07-25T01:02:13.114102"
+      "success": true,
+      "details": "Status: healthy, DB: healthy, API: healthy",
+      "timestamp": "2025-07-25T01:03:42.221114"
     },
     {
       "test": "Rate Limiting",
       "success": false,
       "details": "Rate limiting not triggered - all requests succeeded",
-      "timestamp": "2025-07-25T01:02:15.449484"
+      "timestamp": "2025-07-25T01:03:44.597224"
     },
     {
       "test": "User Registration",
-      "success": false,
-      "details": "HTTP 500: Internal Server Error",
-      "timestamp": "2025-07-25T01:02:16.000222"
+      "success": true,
+      "details": "User registered: sectest_1753405422@cybersec.com",
+      "timestamp": "2025-07-25T01:03:45.419083"
     },
     {
       "test": "User Login",
-      "success": false,
-      "details": "HTTP 500: Internal Server Error",
-      "timestamp": "2025-07-25T01:02:16.553576"
+      "success": true,
+      "details": "Login successful, token type: bearer",
+      "timestamp": "2025-07-25T01:03:46.212256"
     },
     {
       "test": "Token Refresh",
-      "success": false,
-      "details": "No refresh token available",
-      "timestamp": "2025-07-25T01:02:17.054922"
+      "success": true,
+      "details": "Token refresh successful",
+      "timestamp": "2025-07-25T01:03:46.769423"
     },
     {
       "test": "Authentication Required",
       "success": false,
-      "details": "Expected 401, got 500",
-      "timestamp": "2025-07-25T01:02:17.608003"
+      "details": "Expected 401, got 403",
+      "timestamp": "2025-07-25T01:03:47.320242"
     },
     {
       "test": "Protected User Profile",
       "success": false,
-      "details": "HTTP 500: Internal Server Error",
-      "timestamp": "2025-07-25T01:02:18.183627"
+      "details": "HTTP 500: {\"error\":\"Internal server error\",\"detail\":\"An unexpected error occurred\"}",
+      "timestamp": "2025-07-25T01:03:47.906387"
     },
     {
       "test": "Protected Dashboard Stats",
-      "success": false,
-      "details": "HTTP 500: Internal Server Error",
-      "timestamp": "2025-07-25T01:02:18.734514"
+      "success": true,
+      "details": "Stats - Phishing: 0, Safe: 0, Accuracy: 0.0%",
+      "timestamp": "2025-07-25T01:03:48.470774"
     },
     {
       "test": "Protected Recent Emails",
-      "success": false,
-      "details": "HTTP 500: Internal Server Error",
-      "timestamp": "2025-07-25T01:02:19.287286"
+      "success": true,
+      "details": "Empty email list returned (valid)",
+      "timestamp": "2025-07-25T01:03:49.025623"
     },
     {
       "test": "Email Scanning",
-      "success": false,
-      "details": "HTTP 500: Internal Server Error",
-      "timestamp": "2025-07-25T01:02:19.838082"
+      "success": true,
+      "details": "Scan result: potential_phishing (risk: 45.0)",
+      "timestamp": "2025-07-25T01:03:49.586902"
     },
     {
       "test": "Link Scanning",
-      "success": false,
-      "details": "HTTP 500: Internal Server Error",
-      "timestamp": "2025-07-25T01:02:20.390694"
+      "success": true,
+      "details": "Link scan: potential_phishing (risk: 70.0, shortened: True)",
+      "timestamp": "2025-07-25T01:03:50.148787"
     },
     {
       "test": "User Settings",
-      "success": false,
-      "details": "GET failed: HTTP 500",
-      "timestamp": "2025-07-25T01:02:20.952988"
+      "success": true,
+      "details": "GET and PUT settings both working",
+      "timestamp": "2025-07-25T01:03:50.756602"
     }
   ],
   "summary": {
     "total_tests": 12,
-    "passed": 0,
-    "failed": 12
+    "passed": 9,
+    "failed": 3
   }
 }
