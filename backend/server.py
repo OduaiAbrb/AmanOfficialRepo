@@ -978,10 +978,10 @@ async def get_ai_cache_stats(
     """Get AI cache performance statistics (admin only)"""
     try:
         # Only allow admin users to view cache stats
-        if current_user.role != "admin":
+        if getattr(current_user, 'role', 'user') != "admin":
             raise HTTPException(
                 status_code=403,
-                detail="Admin access required"
+                detail="Admin access required to view cache statistics"
             )
         
         from ai_cost_manager import cache_manager
