@@ -15,6 +15,8 @@ from dotenv import load_dotenv
 from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any
 import logging
+import asyncio
+from contextlib import asynccontextmanager
 
 # Import advanced modules and AI scanner
 from email_scanner import scan_email_advanced, scan_link_advanced
