@@ -1,0 +1,57 @@
+{
+  "timestamp": "2025-07-25T01:14:04.374384",
+  "total_tests": 8,
+  "passed_tests": 8,
+  "success_rate": 100.0,
+  "system_status": "PRODUCTION READY",
+  "detailed_results": [
+    {
+      "test": "System Health Check",
+      "success": true,
+      "details": "All systems operational - DB: healthy, API: healthy",
+      "timestamp": "2025-07-25T01:13:54.883438"
+    },
+    {
+      "test": "User Registration",
+      "success": true,
+      "details": "User registered successfully: e2e_test_1753406034@amansec.com",
+      "timestamp": "2025-07-25T01:13:56.206300"
+    },
+    {
+      "test": "User Authentication",
+      "success": true,
+      "details": "Login successful, token received (expires in 1800s)",
+      "timestamp": "2025-07-25T01:13:57.494003"
+    },
+    {
+      "test": "Protected Endpoint Access",
+      "success": true,
+      "details": "4/4 endpoints working (100.0% success rate)",
+      "timestamp": "2025-07-25T01:13:58.725669"
+    },
+    {
+      "test": "Email Scanning Workflow",
+      "success": true,
+      "details": "3/3 scans successful (100.0% success rate)",
+      "timestamp": "2025-07-25T01:13:59.924085"
+    },
+    {
+      "test": "Link Scanning Workflow",
+      "success": true,
+      "details": "3/3 scans successful (100.0% success rate)",
+      "timestamp": "2025-07-25T01:14:01.098370"
+    },
+    {
+      "test": "Dashboard Integration",
+      "success": true,
+      "details": "Dashboard data integration working - Total scans: 3, Accuracy: 95.5%",
+      "timestamp": "2025-07-25T01:14:02.210518"
+    },
+    {
+      "test": "Settings Persistence",
+      "success": true,
+      "details": "Settings successfully saved and retrieved",
+      "timestamp": "2025-07-25T01:14:03.369989"
+    }
+  ]
+}
