@@ -406,8 +406,38 @@ const Dashboard = () => {
 
       {/* Main Content */}
       <div className="flex-1 p-8">
+        {/* Real-time Connection Status */}
+        <div className="mb-4">
+          <div className="flex items-center space-x-4">
+            <div className={`flex items-center space-x-2 px-3 py-1 rounded-full text-sm ${
+              isConnected 
+                ? 'bg-green-100 text-green-800' 
+                : 'bg-red-100 text-red-800'
+            }`}>
+              <div className={`w-2 h-2 rounded-full ${
+                isConnected ? 'bg-green-500' : 'bg-red-500'
+              }`} />
+              <span>
+                {isConnected ? 'Real-time updates active' : `Connection ${connectionStatus}`}
+              </span>
+            </div>
+            
+            {!isConnected && (
+              <button
+                onClick={requestStatistics}
+                className="text-sm text-blue-600 hover:text-blue-800"
+              >
+                Retry Connection
+              </button>
+            )}
+          </div>
+        </div>
+        
         {renderMainContent()}
       </div>
+
+      {/* Real-time Notifications */}
+      <RealTimeNotifications />
 
       {/* Call to Action - Bottom Right */}
       <div className="fixed bottom-6 right-6 z-50">
