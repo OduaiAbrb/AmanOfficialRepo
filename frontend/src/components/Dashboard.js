@@ -390,64 +390,173 @@ const Dashboard = () => {
 };
 
 // Profile Page Component
-const ProfilePage = ({ userProfile }) => (
-  <div className="space-y-6">
-    <div className="flex justify-between items-center">
-      <h1 className="text-3xl font-bold text-gray-900">User Profile</h1>
-    </div>
-    
-    <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-8">
-      <div className="flex items-center space-x-6 mb-8">
-        <div className="w-24 h-24 bg-gray-300 rounded-full flex items-center justify-center">
-          <span className="text-gray-600 font-bold text-2xl">{userProfile?.avatar}</span>
-        </div>
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">{userProfile?.name}</h2>
-          <p className="text-gray-600">{userProfile?.role}</p>
-          <p className="text-sm text-gray-500 mt-1">Joined {userProfile?.joinDate}</p>
-        </div>
-      </div>
+const ProfilePage = ({ user }) => {
+  const { updateProfile } = useAuth();
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState({
+    name: user?.name || '',
+    organization: user?.organization || ''
+  });
+  const [updating, setUpdating] = useState(false);
+  const [message, setMessage] = useState('');
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Contact Information</h3>
-          <div className="space-y-3">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Email</label>
-              <p className="text-gray-900">{userProfile?.email}</p>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Company</label>
-              <p className="text-gray-900">{userProfile?.company}</p>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Location</label>
-              <p className="text-gray-900">{userProfile?.location}</p>
-            </div>
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setUpdating(true);
+    setMessage('');
+
+    const result = await updateProfile(formData);
+    
+    if (result.success) {
+      setMessage('Profile updated successfully!');
+      setIsEditing(false);
+    } else {
+      setMessage(result.error || 'Failed to update profile');
+    }
+    
+    setUpdating(false);
+  };
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold text-gray-900">User Profile</h1>
+        <button
+          onClick={() => setIsEditing(!isEditing)}
+          className="btn-secondary"
+        >
+          {isEditing ? 'Cancel' : 'Edit Profile'}
+        </button>
+      </div>
+      
+      {message && (
+        <div className={`p-4 rounded-md ${message.includes('success') ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+          {message}
+        </div>
+      )}
+      
+      <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-8">
+        <div className="flex items-center space-x-6 mb-8">
+          <div className="w-24 h-24 bg-gray-300 rounded-full flex items-center justify-center">
+            <span className="text-gray-600 font-bold text-2xl">
+              {user?.name ? user.name.split(' ').map(n => n[0]).join('').toUpperCase() : 'U'}
+            </span>
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">{user?.name || 'User'}</h2>
+            <p className="text-gray-600">{user?.role || 'Security Analyst'}</p>
+            <p className="text-sm text-gray-500 mt-1">
+              Joined {user?.created_at ? new Date(user.created_at).toLocaleDateString() : 'Recently'}
+            </p>
           </div>
         </div>
-        
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Security Status</h3>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-700">Two-Factor Authentication</span>
-              <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">Enabled</span>
+
+        {isEditing ? (
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  id="name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="organization" className="block text-sm font-medium text-gray-700 mb-2">
+                  Organization
+                </label>
+                <input
+                  type="text"
+                  id="organization"
+                  name="organization"
+                  value={formData.organization}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-700">Email Monitoring</span>
-              <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">Active</span>
+            <div className="flex space-x-4">
+              <button
+                type="submit"
+                disabled={updating}
+                className="btn-primary disabled:opacity-50"
+              >
+                {updating ? 'Updating...' : 'Save Changes'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsEditing(false)}
+                className="btn-secondary"
+              >
+                Cancel
+              </button>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-700">Threat Alerts</span>
-              <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">On</span>
+          </form>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Contact Information</h3>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Email</label>
+                  <p className="text-gray-900">{user?.email || 'No email'}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Organization</label>
+                  <p className="text-gray-900">{user?.organization || 'No organization'}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Account Status</label>
+                  <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-sm">
+                    {user?.is_active ? 'Active' : 'Inactive'}
+                  </span>
+                </div>
+              </div>
+            </div>
+            
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Security Status</h3>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-700">Account Security</span>
+                  <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">Secured</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-700">Email Monitoring</span>
+                  <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">Active</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-700">Threat Alerts</span>
+                  <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">Enabled</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-700">Last Login</span>
+                  <span className="text-sm text-gray-600">
+                    {user?.last_login ? new Date(user.last_login).toLocaleString() : 'Never'}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 // Settings Page Component
 const SettingsPage = () => {
