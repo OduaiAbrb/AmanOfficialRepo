@@ -15,6 +15,10 @@ import re
 
 from emergentintegrations.llm.chat import LlmChat, UserMessage
 from database import get_database
+from ai_cost_manager import (
+    record_ai_usage, check_ai_usage_limits, 
+    get_cached_ai_response, cache_ai_response
+)
 
 # Configure logging
 logger = logging.getLogger(__name__)
