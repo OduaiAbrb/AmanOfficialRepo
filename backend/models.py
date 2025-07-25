@@ -24,6 +24,7 @@ class ThreatSource(str, Enum):
     FILE = "file"
     SENDER = "sender"
     SUBJECT = "subject"
+    AI_ANALYSIS = "ai_analysis"
 
 class UserRole(str, Enum):
     USER = "user"
