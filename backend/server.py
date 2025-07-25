@@ -797,6 +797,99 @@ async def check_url_threat_intelligence(
             detail="Failed to check URL reputation"
         )
 
+# WebSocket endpoint for real-time updates
+@app.websocket("/api/ws/{user_id}")
+async def websocket_endpoint(websocket: WebSocket, user_id: str):
+    """WebSocket endpoint for real-time dashboard updates and notifications"""
+    try:
+        # Accept connection
+        connection_id = await realtime_manager.connect(websocket, user_id)
+        
+        try:
+            while True:
+                # Keep connection alive and handle incoming messages
+                try:
+                    data = await websocket.receive_text()
+                    message = json.loads(data)
+                    
+                    # Handle different message types
+                    if message.get("type") == "subscribe":
+                        # Handle subscription requests
+                        subscription_types = message.get("subscriptions", ["all"])
+                        # Update connection subscription preferences
+                        if connection_id in realtime_manager.connections:
+                            realtime_manager.connections[connection_id].subscription_types = set(subscription_types)
+                    
+                    elif message.get("type") == "request_stats":
+                        # Send fresh statistics on request
+                        await realtime_manager.send_dashboard_statistics(user_id)
+                    
+                    elif message.get("type") == "ping":
+                        # Handle ping messages to keep connection alive
+                        await websocket.send_text(json.dumps({
+                            "type": "pong",
+                            "timestamp": datetime.utcnow().isoformat()
+                        }))
+                
+                except WebSocketDisconnect:
+                    break
+                    
+                except json.JSONDecodeError:
+                    # Invalid JSON received, send error
+                    await websocket.send_text(json.dumps({
+                        "type": "error",
+                        "message": "Invalid JSON format"
+                    }))
+                
+                except Exception as e:
+                    logger.error(f"WebSocket message handling error: {e}")
+                    await websocket.send_text(json.dumps({
+                        "type": "error", 
+                        "message": "Message handling failed"
+                    }))
+                    
+        except WebSocketDisconnect:
+            pass
+        finally:
+            await realtime_manager.disconnect(connection_id)
+            
+    except Exception as e:
+        logger.error(f"WebSocket connection error: {e}")
+        try:
+            await websocket.close(code=1011, reason="Internal server error")
+        except:
+            pass
+
+# WebSocket connection statistics endpoint (admin only)
+@app.get("/api/ws/stats")
+async def websocket_stats(
+    request: Request,
+    current_user: UserResponse = Depends(get_current_active_user)
+):
+    """Get WebSocket connection statistics"""
+    try:
+        # Only allow admin users to view connection stats
+        if current_user.role != "admin":
+            raise HTTPException(
+                status_code=403,
+                detail="Admin access required"
+            )
+        
+        stats = realtime_manager.get_connection_stats()
+        return {
+            "connection_statistics": stats,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"WebSocket stats error: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to fetch connection statistics"
+        )
+
 # Helper functions
 def _is_shortened_url(url: str) -> bool:
     """Check if URL is a shortened URL"""
