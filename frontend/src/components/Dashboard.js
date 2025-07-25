@@ -1,39 +1,38 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, logout, isAuthenticated } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [currentPage, setCurrentPage] = useState('overview');
   const [stats, setStats] = useState(null);
   const [recentEmails, setRecentEmails] = useState([]);
-  const [userProfile, setUserProfile] = useState(null);
-
-  // Mock user data - realistic cybersecurity professional
-  const mockUserProfile = {
-    name: "Sarah Mitchell",
-    email: "s.mitchell@techcorp.com",
-    company: "TechCorp Financial Services",
-    role: "Security Analyst",
-    avatar: "SM",
-    joinDate: "January 2024",
-    location: "New York, NY"
-  };
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/auth');
+      return;
+    }
+    
     // Fetch dashboard data
     fetchDashboardData();
-    setUserProfile(mockUserProfile);
     
     // Set current page based on URL
     const path = location.pathname.split('/')[2] || 'overview';
     setCurrentPage(path);
-  }, [location]);
+  }, [location, isAuthenticated, navigate]);
 
   const fetchDashboardData = async () => {
     try {
+      setLoading(true);
+      setError('');
+      
       const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
       
       const [statsResponse, emailsResponse] = await Promise.all([
@@ -42,39 +41,59 @@ const Dashboard = () => {
       ]);
       
       setStats(statsResponse.data);
-      setRecentEmails(emailsResponse.data.emails);
+      setRecentEmails(emailsResponse.data.emails || []);
+      
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
-      // Fallback to mock data
-      setStats({
-        phishing_caught: 23,
-        safe_emails: 1247,
-        potential_phishing: 12
-      });
-      setRecentEmails([
-        {
-          id: "1",
-          subject: "Urgent: Verify Your Account Details",
-          sender: "security@fake-bank.com",
-          time: "2 hours ago",
-          status: "phishing"
-        },
-        {
-          id: "2", 
-          subject: "Q4 Security Report - Review Required",
-          sender: "security-team@techcorp.com",
-          time: "4 hours ago",
-          status: "safe"
-        },
-        {
-          id: "3",
-          subject: "System Maintenance Notification",
-          sender: "admin@suspicious-domain.net",
-          time: "6 hours ago", 
-          status: "potential_phishing"
-        }
-      ]);
+      
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        // Authentication failed, redirect to login
+        logout();
+        navigate('/auth');
+        return;
+      }
+      
+      setError('Failed to load dashboard data. Please try again.');
+      
+      // Fallback to mock data only if there's a network error
+      if (!error.response) {
+        setStats({
+          phishing_caught: 23,
+          safe_emails: 1247,
+          potential_phishing: 12
+        });
+        setRecentEmails([
+          {
+            id: "1",
+            subject: "Urgent: Verify Your Account Details",
+            sender: "security@fake-bank.com",
+            time: "2 hours ago",
+            status: "phishing"
+          },
+          {
+            id: "2", 
+            subject: "Q4 Security Report - Review Required",
+            sender: "security-team@techcorp.com",
+            time: "4 hours ago",
+            status: "safe"
+          },
+          {
+            id: "3",
+            subject: "System Maintenance Notification",
+            sender: "admin@suspicious-domain.net",
+            time: "6 hours ago", 
+            status: "potential_phishing"
+          }
+        ]);
+      }
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
   };
 
   const navigationItems = [
