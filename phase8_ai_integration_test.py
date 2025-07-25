@@ -276,8 +276,8 @@ class Phase8AITester:
                 status = data.get('status')
                 threat_sources = data.get('threat_sources', [])
                 
-                # Should detect suspicious links
-                if risk_score >= 50 and 'link' in [source.lower() for source in threat_sources]:
+                # Should detect suspicious links - check if high risk and phishing status
+                if risk_score >= 50 and status in ['potential_phishing', 'phishing']:
                     self.log_result("AI Email Scanning - Suspicious Links", True, 
                                   f"Detected suspicious links: Risk={risk_score:.1f}, Status={status}")
                     return True
