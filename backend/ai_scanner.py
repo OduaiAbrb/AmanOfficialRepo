@@ -384,7 +384,7 @@ Provide threat analysis in JSON format."""
             }
         )
     
-    async def _store_ai_analysis(self, analysis: AIThreatAnalysis, original_data: Dict[str, Any]):
+    async def _store_ai_analysis(self, analysis: AIThreatAnalysis, original_data: Dict[str, Any], user_id: str):
         """Store AI analysis results for learning and improvement"""
         try:
             db = get_database()
