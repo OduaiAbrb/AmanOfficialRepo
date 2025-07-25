@@ -561,7 +561,8 @@ class BackendTester:
         except requests.exceptions.RequestException as e:
             self.log_result("Extension Cross-Platform Compatibility", False, f"Request failed: {str(e)}")
             return False
-        """Test rate limiting functionality"""
+
+    def test_rate_limiting(self):
         try:
             # Make multiple rapid requests to health endpoint (limit: 10/minute)
             rapid_requests = []
