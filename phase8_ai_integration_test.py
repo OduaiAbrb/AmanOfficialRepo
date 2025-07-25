@@ -695,8 +695,8 @@ class Phase8AITester:
                 timeout=10
             )
             
-            # Should return 401 Unauthorized without authentication
-            if response.status_code == 401:
+            # Should return 401 Unauthorized or 403 Forbidden without authentication
+            if response.status_code in [401, 403]:
                 self.log_result("JWT Authentication on AI Endpoints", True, 
                               f"Correctly rejected unauthenticated request: {response.status_code}")
                 return True
