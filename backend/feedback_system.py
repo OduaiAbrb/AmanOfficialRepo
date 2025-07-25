@@ -111,8 +111,11 @@ class FeedbackCollector:
                 created_at=datetime.utcnow()
             )
             
-            # Store feedback
-            await db.feedback.insert_one(feedback_entry.__dict__)
+            # Store feedback (convert enums to values for database storage)
+            feedback_dict = feedback_entry.__dict__.copy()
+            feedback_dict['feedback_type'] = feedback_entry.feedback_type.value
+            feedback_dict['source'] = feedback_entry.source.value
+            await db.feedback.insert_one(feedback_dict)
             
             # Process feedback for immediate learning
             await self._process_feedback_immediately(feedback_entry)
