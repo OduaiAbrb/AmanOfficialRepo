@@ -1,41 +1,101 @@
 {
-  "timestamp": "2025-07-24T23:35:45.799234",
+  "timestamp": "2025-07-25T13:10:15.921103",
   "backend_url": "https://30cbd4d9-b4c7-4721-ba22-5b885cf844b0.preview.emergentagent.com/api",
   "results": [
     {
-      "test": "Health Check",
-      "success": true,
-      "details": "Status: healthy, Service: Aman Cybersecurity Platform",
-      "timestamp": "2025-07-24T23:35:45.628116"
+      "test": "Enhanced Health Check",
+      "success": false,
+      "details": "HTTP 502: ",
+      "timestamp": "2025-07-25T13:10:13.505089"
     },
     {
-      "test": "Dashboard Stats",
-      "success": true,
-      "details": "Phishing: 12, Safe: 485, Potential: 7",
-      "timestamp": "2025-07-24T23:35:45.680500"
+      "test": "User Registration",
+      "success": false,
+      "details": "HTTP 502: ",
+      "timestamp": "2025-07-25T13:10:13.555308"
     },
     {
-      "test": "Recent Emails",
-      "success": true,
-      "details": "Retrieved 5 emails with valid structure",
-      "timestamp": "2025-07-24T23:35:45.735165"
+      "test": "User Login",
+      "success": false,
+      "details": "HTTP 502: ",
+      "timestamp": "2025-07-25T13:10:13.605862"
     },
     {
-      "test": "User Profile",
-      "success": true,
-      "details": "User: John Doe (john.doe@company.com) at TechCorp Inc.",
-      "timestamp": "2025-07-24T23:35:45.789453"
+      "test": "Token Refresh",
+      "success": false,
+      "details": "Could not login to get refresh token",
+      "timestamp": "2025-07-25T13:10:13.652608"
     },
     {
-      "test": "MongoDB Connection",
-      "success": true,
-      "details": "Connection confirmed in backend logs",
-      "timestamp": "2025-07-24T23:35:45.799098"
+      "test": "Protected User Profile",
+      "success": false,
+      "details": "HTTP 502: ",
+      "timestamp": "2025-07-25T13:10:13.702633"
+    },
+    {
+      "test": "Protected Dashboard Stats",
+      "success": false,
+      "details": "HTTP 502: ",
+      "timestamp": "2025-07-25T13:10:13.753357"
+    },
+    {
+      "test": "Protected Recent Emails",
+      "success": false,
+      "details": "HTTP 502: ",
+      "timestamp": "2025-07-25T13:10:13.800342"
+    },
+    {
+      "test": "Advanced Email Scanning",
+      "success": false,
+      "details": "HTTP 502: ",
+      "timestamp": "2025-07-25T13:10:13.846309"
+    },
+    {
+      "test": "Enhanced Link Scanning",
+      "success": false,
+      "details": "HTTP 502: ",
+      "timestamp": "2025-07-25T13:10:13.898515"
+    },
+    {
+      "test": "Feedback Submission",
+      "success": false,
+      "details": "Could not perform initial scan for feedback test",
+      "timestamp": "2025-07-25T13:10:13.950537"
+    },
+    {
+      "test": "Feedback Analytics",
+      "success": false,
+      "details": "HTTP 502: ",
+      "timestamp": "2025-07-25T13:10:13.998971"
+    },
+    {
+      "test": "Domain Threat Intelligence",
+      "success": false,
+      "details": "HTTP 502: ",
+      "timestamp": "2025-07-25T13:10:14.043077"
+    },
+    {
+      "test": "URL Threat Intelligence",
+      "success": false,
+      "details": "HTTP 502: ",
+      "timestamp": "2025-07-25T13:10:14.092025"
+    },
+    {
+      "test": "User Settings",
+      "success": false,
+      "details": "GET failed: HTTP 502",
+      "timestamp": "2025-07-25T13:10:14.141311"
+    },
+    {
+      "test": "Rate Limiting",
+      "success": false,
+      "details": "Rate limiting not triggered - all requests succeeded",
+      "timestamp": "2025-07-25T13:10:15.918637"
     }
   ],
   "summary": {
-    "total_tests": 5,
-    "passed": 5,
-    "failed": 0
+    "total_tests": 15,
+    "passed": 0,
+    "failed": 15
   }
 }
