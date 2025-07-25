@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-07-25T01:14:04.374384",
+  "timestamp": "2025-07-25T01:27:08.452570",
   "total_tests": 8,
   "passed_tests": 8,
   "success_rate": 100.0,
@@ -9,49 +9,49 @@
       "test": "System Health Check",
       "success": true,
       "details": "All systems operational - DB: healthy, API: healthy",
-      "timestamp": "2025-07-25T01:13:54.883438"
+      "timestamp": "2025-07-25T01:26:59.037292"
     },
     {
       "test": "User Registration",
       "success": true,
-      "details": "User registered successfully: e2e_test_1753406034@amansec.com",
-      "timestamp": "2025-07-25T01:13:56.206300"
+      "details": "User registered successfully: e2e_test_1753406818@amansec.com",
+      "timestamp": "2025-07-25T01:27:00.329715"
     },
     {
       "test": "User Authentication",
       "success": true,
       "details": "Login successful, token received (expires in 1800s)",
-      "timestamp": "2025-07-25T01:13:57.494003"
+      "timestamp": "2025-07-25T01:27:01.613333"
     },
     {
       "test": "Protected Endpoint Access",
       "success": true,
       "details": "4/4 endpoints working (100.0% success rate)",
-      "timestamp": "2025-07-25T01:13:58.725669"
+      "timestamp": "2025-07-25T01:27:02.828052"
     },
     {
       "test": "Email Scanning Workflow",
       "success": true,
       "details": "3/3 scans successful (100.0% success rate)",
-      "timestamp": "2025-07-25T01:13:59.924085"
+      "timestamp": "2025-07-25T01:27:04.019569"
     },
     {
       "test": "Link Scanning Workflow",
       "success": true,
       "details": "3/3 scans successful (100.0% success rate)",
-      "timestamp": "2025-07-25T01:14:01.098370"
+      "timestamp": "2025-07-25T01:27:05.183119"
     },
     {
       "test": "Dashboard Integration",
       "success": true,
       "details": "Dashboard data integration working - Total scans: 3, Accuracy: 95.5%",
-      "timestamp": "2025-07-25T01:14:02.210518"
+      "timestamp": "2025-07-25T01:27:06.288122"
     },
     {
       "test": "Settings Persistence",
       "success": true,
       "details": "Settings successfully saved and retrieved",
-      "timestamp": "2025-07-25T01:14:03.369989"
+      "timestamp": "2025-07-25T01:27:07.448319"
     }
   ]
 }
