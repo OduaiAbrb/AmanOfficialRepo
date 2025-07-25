@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Backend API Testing Suite for Aman Cybersecurity Platform - Phase 8 AI Integration Testing
-Tests AI-powered email and link scanning with Gemini AI integration, security features, and fallback mechanisms
+Backend API Testing Suite for Aman Cybersecurity Platform - Browser Extension Backend Integration Testing
+Tests browser extension API integration, authentication flow, AI-powered scanning, and cross-platform compatibility
 """
 
 import requests
