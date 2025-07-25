@@ -16,7 +16,10 @@ from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any
 import logging
 
-# Import our modules
+# Import new advanced modules
+from email_scanner import scan_email_advanced, scan_link_advanced
+from feedback_system import submit_scan_feedback, get_user_feedback_analytics
+from threat_intelligence import check_domain_reputation, check_url_reputation
 from models import (
     UserCreate, UserResponse, LoginRequest, Token, RefreshTokenRequest,
     EmailScanRequest, EmailScanResponse, DashboardStats, DashboardData,
