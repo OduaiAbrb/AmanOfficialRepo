@@ -40,7 +40,7 @@ from security import (
     auth_rate_limiter, IPValidator
 )
 from database import (
-    connect_to_mongo, close_mongo_connection, init_collections,
+    get_database, connect_to_mongo, close_mongo_connection, init_collections,
     UserDatabase, EmailScanDatabase, ThreatDatabase, FeedbackDatabase,
     SettingsDatabase
 )
