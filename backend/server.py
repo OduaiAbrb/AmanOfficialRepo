@@ -18,7 +18,7 @@ import logging
 import asyncio
 from contextlib import asynccontextmanager
 
-# Import advanced modules and AI scanner
+# Import modules
 from email_scanner import scan_email_advanced, scan_link_advanced
 from ai_scanner import scan_email_with_ai, scan_link_with_ai
 from feedback_system import submit_scan_feedback, get_user_feedback_analytics
