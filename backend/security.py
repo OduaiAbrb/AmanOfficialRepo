@@ -146,6 +146,14 @@ class InputValidator:
             return False
     
     @classmethod
+    def validate_domain(cls, domain: str) -> bool:
+        """Validate domain format"""
+        try:
+            return validators.domain(domain)
+        except:
+            return False
+    
+    @classmethod
     def validate_file_extension(cls, filename: str) -> bool:
         """Validate file extension"""
         if not filename:
