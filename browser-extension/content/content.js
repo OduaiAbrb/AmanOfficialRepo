@@ -283,6 +283,82 @@ function displayScanResult(container, result) {
   
   // Log result
   console.log('Email scan result:', result);
+  
+  // Show notification for high-risk emails
+  if (result.riskLevel === 'danger' && result.aiPowered) {
+    showThreatNotification(result);
+  }
+}
+
+// Show threat notification
+function showThreatNotification(result) {
+  // Create notification element
+  const notification = document.createElement('div');
+  notification.className = 'aman-threat-notification';
+  notification.innerHTML = `
+    <div style="
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #fee2e2;
+      border: 2px solid #ef4444;
+      border-radius: 8px;
+      padding: 12px;
+      max-width: 300px;
+      z-index: 10000;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      animation: slideIn 0.3s ease-out;
+    ">
+      <div style="display: flex; align-items: start; gap: 8px;">
+        <div style="color: #ef4444; font-size: 18px; line-height: 1;">⚠</div>
+        <div>
+          <div style="font-weight: 600; color: #dc2626; font-size: 14px;">
+            Aman Security Alert
+          </div>
+          <div style="color: #7f1d1d; font-size: 12px; margin-top: 4px;">
+            ${result.explanation || 'High-risk phishing attempt detected'}
+          </div>
+          ${result.aiPowered ? 
+            '<div style="color: #991b1b; font-size: 10px; margin-top: 6px;">AI-Powered Detection</div>' : 
+            ''
+          }
+        </div>
+        <button onclick="this.parentElement.parentElement.parentElement.remove()" 
+                style="
+                  background: none; 
+                  border: none; 
+                  color: #dc2626; 
+                  font-size: 16px; 
+                  cursor: pointer;
+                  padding: 0;
+                  line-height: 1;
+                ">×</button>
+      </div>
+    </div>
+  `;
+  
+  // Add animation styles
+  if (!document.querySelector('#aman-notification-styles')) {
+    const style = document.createElement('style');
+    style.id = 'aman-notification-styles';
+    style.textContent = `
+      @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+  
+  document.body.appendChild(notification);
+  
+  // Auto-remove after 8 seconds
+  setTimeout(() => {
+    if (notification.parentNode) {
+      notification.style.opacity = '0';
+      setTimeout(() => notification.remove(), 300);
+    }
+  }, 8000);
 }
 
 // Create security badge
