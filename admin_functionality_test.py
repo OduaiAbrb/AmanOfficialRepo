@@ -519,7 +519,7 @@ class AdminFunctionalityTester:
         
         if not self.create_regular_user():
             print("❌ Failed to create regular user - aborting tests")
-            return
+            return 0, 0
         
         # Admin Functionality Tests
         admin_tests = [
