@@ -1,0 +1,49 @@
+/* Additional custom styles */
+.App {
+  text-align: left;
+}
+
+/* Smooth transitions */
+* {
+  transition: all 0.2s ease-in-out;
+}
+
+/* Primary button styles */
+.btn-primary {
+  @apply bg-primary hover:bg-primary-dark text-black font-semibold py-2 px-4 rounded-lg transition-colors;
+}
+
+.btn-secondary {
+  @apply bg-gray-800 hover:bg-gray-900 text-white font-semibold py-2 px-4 rounded-lg transition-colors;
+}
+
+/* Custom animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in-up {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+/* Loading spinner */
+.spinner {
+  border: 3px solid #f3f3f4;
+  border-top: 3px solid #24fa39;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

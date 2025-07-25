@@ -1,0 +1,67 @@
+{
+  "manifest_version": 3,
+  "name": "Aman Cybersecurity Protection",
+  "version": "1.0.1",
+  "description": "AI-powered real-time phishing detection and protection for Gmail and Outlook",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "scripting",
+    "notifications"
+  ],
+  "host_permissions": [
+    "https://mail.google.com/*",
+    "https://outlook.live.com/*",
+    "https://outlook.office.com/*",
+    "https://outlook.office365.com/*",
+    "https://30cbd4d9-b4c7-4721-ba22-5b885cf844b0.preview.emergentagent.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://mail.google.com/*",
+        "https://outlook.live.com/*",
+        "https://outlook.office.com/*",
+        "https://outlook.office365.com/*"
+      ],
+      "js": ["content/content.js"],
+      "css": ["content/content.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "background": {
+    "service_worker": "src/background.js"
+  },
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "Aman Cybersecurity Protection - AI Powered",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["content/indicator.html", "content/content.css"],
+      "matches": [
+        "https://mail.google.com/*",
+        "https://outlook.live.com/*",
+        "https://outlook.office.com/*",
+        "https://outlook.office365.com/*"
+      ]
+    }
+  ],
+  "externally_connectable": {
+    "matches": [
+      "https://30cbd4d9-b4c7-4721-ba22-5b885cf844b0.preview.emergentagent.com/*"
+    ]
+  }
+}
