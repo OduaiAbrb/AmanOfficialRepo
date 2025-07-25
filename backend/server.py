@@ -273,7 +273,7 @@ async def get_user_profile(
         name=current_user.name,
         organization=current_user.organization,
         is_active=current_user.is_active,
-        role=current_user.role,
+        role=getattr(current_user, 'role', 'user'),  # Default to 'user' if role not present
         created_at=current_user.created_at,
         last_login=current_user.last_login
     )
