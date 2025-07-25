@@ -250,8 +250,9 @@ function handleRefreshScan() {
 }
 
 function handleOpenDashboard() {
+    // Use the correct production URL
     chrome.tabs.create({ 
-        url: 'http://localhost:3000/dashboard' 
+        url: 'https://30cbd4d9-b4c7-4721-ba22-5b885cf844b0.preview.emergentagent.com/dashboard' 
     });
 }
 
