@@ -163,6 +163,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('authToken');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('userData');
+    localStorage.removeItem('userEmail');
     
     // Clear axios header
     delete axios.defaults.headers.common['Authorization'];
