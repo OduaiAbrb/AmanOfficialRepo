@@ -16,8 +16,9 @@ from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any
 import logging
 
-# Import new advanced modules
+# Import advanced modules and AI scanner
 from email_scanner import scan_email_advanced, scan_link_advanced
+from ai_scanner import scan_email_with_ai, scan_link_with_ai
 from feedback_system import submit_scan_feedback, get_user_feedback_analytics
 from threat_intelligence import check_domain_reputation, check_url_reputation
 from models import (
