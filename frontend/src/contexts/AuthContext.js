@@ -94,6 +94,14 @@ export const AuthProvider = ({ children }) => {
         
         // Store user data
         localStorage.setItem('userData', JSON.stringify(userData));
+        localStorage.setItem('userEmail', userData.email);
+        
+        // Try to authenticate browser extension
+        setTimeout(() => {
+          if (window.amanExtensionAuth) {
+            window.amanExtensionAuth.sendAuthToExtension(access_token, userData.email);
+          }
+        }, 500);
         
         return { success: true, user: userData };
       }
