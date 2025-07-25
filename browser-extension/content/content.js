@@ -283,6 +283,82 @@ function displayScanResult(container, result) {
   
   // Log result
   console.log('Email scan result:', result);
+  
+  // Show notification for high-risk emails
+  if (result.riskLevel === 'danger' && result.aiPowered) {
+    showThreatNotification(result);
+  }
+}
+
+// Show threat notification
+function showThreatNotification(result) {
+  // Create notification element
+  const notification = document.createElement('div');
+  notification.className = 'aman-threat-notification';
+  notification.innerHTML = `
+    <div style="
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #fee2e2;
+      border: 2px solid #ef4444;
+      border-radius: 8px;
+      padding: 12px;
+      max-width: 300px;
+      z-index: 10000;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      animation: slideIn 0.3s ease-out;
+    ">
+      <div style="display: flex; align-items: start; gap: 8px;">
+        <div style="color: #ef4444; font-size: 18px; line-height: 1;">⚠</div>
+        <div>
+          <div style="font-weight: 600; color: #dc2626; font-size: 14px;">
+            Aman Security Alert
+          </div>
+          <div style="color: #7f1d1d; font-size: 12px; margin-top: 4px;">
+            ${result.explanation || 'High-risk phishing attempt detected'}
+          </div>
+          ${result.aiPowered ? 
+            '<div style="color: #991b1b; font-size: 10px; margin-top: 6px;">AI-Powered Detection</div>' : 
+            ''
+          }
+        </div>
+        <button onclick="this.parentElement.parentElement.parentElement.remove()" 
+                style="
+                  background: none; 
+                  border: none; 
+                  color: #dc2626; 
+                  font-size: 16px; 
+                  cursor: pointer;
+                  padding: 0;
+                  line-height: 1;
+                ">×</button>
+      </div>
+    </div>
+  `;
+  
+  // Add animation styles
+  if (!document.querySelector('#aman-notification-styles')) {
+    const style = document.createElement('style');
+    style.id = 'aman-notification-styles';
+    style.textContent = `
+      @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+  
+  document.body.appendChild(notification);
+  
+  // Auto-remove after 8 seconds
+  setTimeout(() => {
+    if (notification.parentNode) {
+      notification.style.opacity = '0';
+      setTimeout(() => notification.remove(), 300);
+    }
+  }, 8000);
 }
 
 // Create security badge
@@ -298,6 +374,7 @@ function createSecurityBadge(result) {
   
   const color = colors[result.riskLevel] || colors.safe;
   
+  // Enhanced badge with AI indicator
   badge.innerHTML = `
     <div style="
       display: flex;
@@ -313,21 +390,43 @@ function createSecurityBadge(result) {
       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     ">
       <span style="margin-right: 8px; font-size: 14px;">${color.icon}</span>
-      <div>
-        <div style="font-weight: 600; margin-bottom: 2px;">
-          Aman Security: ${result.riskLevel.toUpperCase()}
+      <div style="flex-grow: 1;">
+        <div style="font-weight: 600; margin-bottom: 2px; display: flex; align-items: center; gap: 6px;">
+          <span>Aman Security: ${result.riskLevel.toUpperCase()}</span>
+          ${result.aiPowered ? 
+            '<span style="background: #8b5cf6; color: white; font-size: 9px; padding: 2px 4px; border-radius: 3px; font-weight: 500;">AI</span>' : 
+            ''
+          }
+          ${result.fallback ? 
+            '<span style="background: #6b7280; color: white; font-size: 9px; padding: 2px 4px; border-radius: 3px; font-weight: 500;">LOCAL</span>' : 
+            ''
+          }
         </div>
-        <div style="font-size: 11px; opacity: 0.8;">
+        <div style="font-size: 11px; opacity: 0.8; margin-bottom: 4px;">
           ${result.explanation}
         </div>
-        ${result.threats.length > 0 ? `
-          <div style="font-size: 11px; margin-top: 4px;">
-            Threats: ${result.threats.join(', ')}
+        ${result.threats && result.threats.length > 0 ? `
+          <div style="font-size: 11px; margin-bottom: 4px;">
+            <strong>Threats:</strong> ${result.threats.slice(0, 3).join(', ')}${result.threats.length > 3 ? '...' : ''}
+          </div>
+        ` : ''}
+        ${result.threatSources && result.threatSources.length > 0 ? `
+          <div style="font-size: 10px; opacity: 0.7;">
+            Sources: ${result.threatSources.slice(0, 2).join(', ')}
+          </div>
+        ` : ''}
+        ${result.recommendations && result.recommendations.length > 0 && result.riskLevel !== 'safe' ? `
+          <div style="font-size: 10px; margin-top: 4px; padding: 4px; background: rgba(255,255,255,0.5); border-radius: 3px;">
+            💡 ${result.recommendations[0]}
           </div>
         ` : ''}
       </div>
-      <div style="margin-left: auto; font-size: 11px; opacity: 0.7;">
-        Risk: ${result.riskScore}%
+      <div style="text-align: right; font-size: 11px; opacity: 0.7;">
+        <div>Risk: ${result.riskScore}%</div>
+        ${result.aiPowered ? 
+          '<div style="font-size: 9px; margin-top: 2px;">AI Powered</div>' : 
+          ''
+        }
       </div>
     </div>
   `;

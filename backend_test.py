@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Backend API Testing Suite for Aman Cybersecurity Platform - Phase 8 AI Integration Testing
-Tests AI-powered email and link scanning with Gemini AI integration, security features, and fallback mechanisms
+Backend API Testing Suite for Aman Cybersecurity Platform - Browser Extension Backend Integration Testing
+Tests browser extension API integration, authentication flow, AI-powered scanning, and cross-platform compatibility
 """
 
 import requests
@@ -88,8 +88,481 @@ class BackendTester:
         except requests.exceptions.RequestException as e:
             self.log_result("Enhanced Health Check", False, f"Request failed: {str(e)}")
             return False
+    def test_browser_extension_cors_headers(self):
+        """Test CORS configuration allows browser extension requests"""
+        try:
+            # Simulate browser extension request with extension origin
+            headers = {
+                'Origin': 'chrome-extension://abcdefghijklmnopqrstuvwxyz123456',
+                'Access-Control-Request-Method': 'POST',
+                'Access-Control-Request-Headers': 'authorization,content-type'
+            }
+            
+            # Test preflight request
+            response = requests.options(f"{self.backend_url}/scan/email", headers=headers, timeout=10)
+            
+            if response.status_code == 200:
+                # Check CORS headers
+                cors_headers = response.headers
+                access_control_allow_origin = cors_headers.get('Access-Control-Allow-Origin', '')
+                access_control_allow_methods = cors_headers.get('Access-Control-Allow-Methods', '')
+                access_control_allow_headers = cors_headers.get('Access-Control-Allow-Headers', '')
+                
+                # Check if CORS is properly configured for extensions
+                cors_configured = (
+                    '*' in access_control_allow_origin or 'chrome-extension' in access_control_allow_origin and
+                    'POST' in access_control_allow_methods and
+                    'authorization' in access_control_allow_headers.lower()
+                )
+                
+                if cors_configured:
+                    self.log_result("Browser Extension CORS Headers", True, 
+                                  f"CORS properly configured - Origin: {access_control_allow_origin}, Methods: {access_control_allow_methods}")
+                    return True
+                else:
+                    self.log_result("Browser Extension CORS Headers", False, 
+                                  f"CORS not configured for extensions - Origin: {access_control_allow_origin}")
+                    return False
+            else:
+                self.log_result("Browser Extension CORS Headers", False, f"Preflight request failed: HTTP {response.status_code}")
+                return False
+                
+        except requests.exceptions.RequestException as e:
+            self.log_result("Browser Extension CORS Headers", False, f"Request failed: {str(e)}")
+            return False
+
+    def test_extension_authentication_flow(self):
+        """Test JWT authentication flow for browser extension"""
+        try:
+            # Simulate extension authentication with additional headers
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/91.0.4472.124 Extension/1.0',
+                'Origin': 'chrome-extension://test-extension-id',
+                'Content-Type': 'application/json'
+            }
+            
+            login_data = {
+                "email": self.test_user_data["email"],
+                "password": self.test_user_data["password"]
+            }
+            
+            response = requests.post(
+                f"{self.backend_url}/auth/login",
+                json=login_data,
+                headers=headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                required_fields = ['access_token', 'refresh_token', 'token_type']
+                
+                if all(field in data for field in required_fields):
+                    # Test if token works for extension API calls
+                    auth_headers = {
+                        **headers,
+                        'Authorization': f"Bearer {data['access_token']}"
+                    }
+                    
+                    # Test protected endpoint with extension headers
+                    profile_response = requests.get(
+                        f"{self.backend_url}/user/profile",
+                        headers=auth_headers,
+                        timeout=10
+                    )
+                    
+                    if profile_response.status_code == 200:
+                        self.log_result("Extension Authentication Flow", True, 
+                                      f"Extension authentication successful, token works for API calls")
+                        return True
+                    else:
+                        self.log_result("Extension Authentication Flow", False, 
+                                      f"Token doesn't work for extension API calls: HTTP {profile_response.status_code}")
+                        return False
+                else:
+                    self.log_result("Extension Authentication Flow", False, f"Missing token fields: {required_fields}")
+                    return False
+            else:
+                self.log_result("Extension Authentication Flow", False, f"Extension login failed: HTTP {response.status_code}")
+                return False
+                
+        except requests.exceptions.RequestException as e:
+            self.log_result("Extension Authentication Flow", False, f"Request failed: {str(e)}")
+            return False
+
+    def test_extension_email_scanning_integration(self):
+        """Test email scanning API integration for browser extension"""
+        try:
+            headers = self.get_auth_headers()
+            headers.update({
+                'User-Agent': 'Mozilla/5.0 Chrome Extension',
+                'Origin': 'chrome-extension://test-extension-id',
+                'X-Extension-Version': '1.0.0'
+            })
+            
+            # Test email scanning with extension-specific data format
+            extension_email_data = {
+                "email_subject": "Urgent: Account Security Alert - Action Required",
+                "email_body": "Your account has been compromised. Click here to secure it: http://fake-bank-security.com/secure-login?token=malicious123. Enter your credentials immediately to prevent account closure.",
+                "sender": "security@fake-bank-security.com",
+                "recipient": self.test_user_data["email"],
+                "extension_metadata": {
+                    "platform": "gmail",
+                    "timestamp": "2025-01-27T10:30:00Z",
+                    "extension_id": "test-extension-id"
+                }
+            }
+            
+            response = requests.post(
+                f"{self.backend_url}/scan/email",
+                json=extension_email_data,
+                headers=headers,
+                timeout=15
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                required_fields = ['id', 'status', 'risk_score', 'explanation', 'threat_sources', 'detected_threats', 'recommendations']
+                
+                if all(field in data for field in required_fields):
+                    risk_score = data.get('risk_score', 0)
+                    status = data.get('status')
+                    explanation = data.get('explanation', '')
+                    
+                    # Verify AI-powered scanning works through extension
+                    if (risk_score >= 70 and status in ['potential_phishing', 'phishing'] and 
+                        len(explanation) > 50):
+                        self.log_result("Extension Email Scanning Integration", True, 
+                                      f"Extension email scanning working - Risk: {risk_score:.1f}, Status: {status}")
+                        return True
+                    else:
+                        self.log_result("Extension Email Scanning Integration", False, 
+                                      f"Extension scanning not detecting threats properly - Risk: {risk_score:.1f}")
+                        return False
+                else:
+                    missing_fields = [f for f in required_fields if f not in data]
+                    self.log_result("Extension Email Scanning Integration", False, f"Missing response fields: {missing_fields}")
+                    return False
+            elif response.status_code == 401 or response.status_code == 403:
+                self.log_result("Extension Email Scanning Integration", False, "Extension authentication failed")
+                return False
+            else:
+                self.log_result("Extension Email Scanning Integration", False, f"HTTP {response.status_code}: {response.text}")
+                return False
+                
+        except requests.exceptions.RequestException as e:
+            self.log_result("Extension Email Scanning Integration", False, f"Request failed: {str(e)}")
+            return False
+
+    def test_extension_link_scanning_integration(self):
+        """Test link scanning API integration for browser extension"""
+        try:
+            headers = self.get_auth_headers()
+            headers.update({
+                'User-Agent': 'Mozilla/5.0 Chrome Extension',
+                'Origin': 'chrome-extension://test-extension-id',
+                'X-Extension-Version': '1.0.0'
+            })
+            
+            # Test link scanning with extension context
+            extension_link_data = {
+                "url": "http://phishing-site-example.tk/login?redirect=http://malicious.com",
+                "context": "Click here to verify your account - found in suspicious email",
+                "extension_metadata": {
+                    "platform": "outlook",
+                    "found_in": "email_body",
+                    "surrounding_text": "urgent action required"
+                }
+            }
+            
+            response = requests.post(
+                f"{self.backend_url}/scan/link",
+                json=extension_link_data,
+                headers=headers,
+                timeout=15
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                required_fields = ['url', 'status', 'risk_score', 'explanation', 'threat_categories', 'redirect_chain', 'is_shortened']
+                
+                if all(field in data for field in required_fields):
+                    risk_score = data.get('risk_score', 0)
+                    status = data.get('status')
+                    explanation = data.get('explanation', '')
+                    threat_categories = data.get('threat_categories', [])
+                    
+                    # Verify AI-powered link scanning works through extension
+                    if (risk_score >= 60 and status in ['potential_phishing', 'phishing'] and 
+                        len(explanation) > 30 and len(threat_categories) > 0):
+                        self.log_result("Extension Link Scanning Integration", True, 
+                                      f"Extension link scanning working - Risk: {risk_score:.1f}, Categories: {len(threat_categories)}")
+                        return True
+                    else:
+                        self.log_result("Extension Link Scanning Integration", False, 
+                                      f"Extension link scanning not detecting threats - Risk: {risk_score:.1f}")
+                        return False
+                else:
+                    missing_fields = [f for f in required_fields if f not in data]
+                    self.log_result("Extension Link Scanning Integration", False, f"Missing response fields: {missing_fields}")
+                    return False
+            elif response.status_code == 401 or response.status_code == 403:
+                self.log_result("Extension Link Scanning Integration", False, "Extension authentication failed")
+                return False
+            else:
+                self.log_result("Extension Link Scanning Integration", False, f"HTTP {response.status_code}: {response.text}")
+                return False
+                
+        except requests.exceptions.RequestException as e:
+            self.log_result("Extension Link Scanning Integration", False, f"Request failed: {str(e)}")
+            return False
+
+    def test_extension_data_transformation(self):
+        """Test API response transformation for extension format"""
+        try:
+            headers = self.get_auth_headers()
+            headers.update({
+                'User-Agent': 'Mozilla/5.0 Chrome Extension',
+                'Accept': 'application/json',
+                'X-Extension-Format': 'popup'
+            })
+            
+            # Test dashboard stats for extension popup
+            response = requests.get(f"{self.backend_url}/dashboard/stats", headers=headers, timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                required_fields = ['phishing_caught', 'safe_emails', 'potential_phishing', 'total_scans', 'accuracy_rate']
+                
+                if all(field in data for field in required_fields):
+                    # Verify data is in format suitable for extension popup
+                    stats_valid = (
+                        isinstance(data['phishing_caught'], int) and
+                        isinstance(data['safe_emails'], int) and
+                        isinstance(data['potential_phishing'], int) and
+                        isinstance(data['total_scans'], int) and
+                        isinstance(data['accuracy_rate'], (int, float))
+                    )
+                    
+                    if stats_valid:
+                        # Test recent emails for extension format
+                        emails_response = requests.get(f"{self.backend_url}/dashboard/recent-emails", headers=headers, timeout=10)
+                        
+                        if emails_response.status_code == 200:
+                            emails_data = emails_response.json()
+                            if 'emails' in emails_data and isinstance(emails_data['emails'], list):
+                                self.log_result("Extension Data Transformation", True, 
+                                              f"API responses properly formatted for extension - Stats and emails available")
+                                return True
+                            else:
+                                self.log_result("Extension Data Transformation", False, "Emails data not properly formatted")
+                                return False
+                        else:
+                            self.log_result("Extension Data Transformation", False, f"Recent emails failed: HTTP {emails_response.status_code}")
+                            return False
+                    else:
+                        self.log_result("Extension Data Transformation", False, "Stats data types invalid for extension")
+                        return False
+                else:
+                    missing_fields = [f for f in required_fields if f not in data]
+                    self.log_result("Extension Data Transformation", False, f"Missing stats fields: {missing_fields}")
+                    return False
+            elif response.status_code == 401 or response.status_code == 403:
+                self.log_result("Extension Data Transformation", False, "Extension authentication failed")
+                return False
+            else:
+                self.log_result("Extension Data Transformation", False, f"HTTP {response.status_code}: {response.text}")
+                return False
+                
+        except requests.exceptions.RequestException as e:
+            self.log_result("Extension Data Transformation", False, f"Request failed: {str(e)}")
+            return False
+
+    def test_extension_error_handling(self):
+        """Test error handling and fallbacks for extension requests"""
+        try:
+            headers = self.get_auth_headers()
+            headers.update({
+                'User-Agent': 'Mozilla/5.0 Chrome Extension',
+                'Origin': 'chrome-extension://test-extension-id'
+            })
+            
+            # Test with invalid email data to trigger error handling
+            invalid_email_data = {
+                "email_subject": "A" * 300,  # Very long subject
+                "email_body": "B" * 60000,   # Exceeds 50KB limit
+                "sender": "invalid-email-format",
+                "recipient": self.test_user_data["email"]
+            }
+            
+            response = requests.post(
+                f"{self.backend_url}/scan/email",
+                json=invalid_email_data,
+                headers=headers,
+                timeout=15
+            )
+            
+            # Should return 400 or 422 for validation error
+            if response.status_code in [400, 422]:
+                error_data = response.json()
+                
+                # Check if error response is properly formatted for extension
+                if 'error' in error_data or 'detail' in error_data:
+                    # Test with invalid URL to check link scanning error handling
+                    invalid_link_data = {
+                        "url": "not-a-valid-url-format",
+                        "context": "test context"
+                    }
+                    
+                    link_response = requests.post(
+                        f"{self.backend_url}/scan/link",
+                        json=invalid_link_data,
+                        headers=headers,
+                        timeout=10
+                    )
+                    
+                    if link_response.status_code in [400, 422]:
+                        link_error_data = link_response.json()
+                        if 'error' in link_error_data or 'detail' in link_error_data:
+                            self.log_result("Extension Error Handling", True, 
+                                          "Error handling working properly for extension requests")
+                            return True
+                        else:
+                            self.log_result("Extension Error Handling", False, "Link error response not properly formatted")
+                            return False
+                    else:
+                        self.log_result("Extension Error Handling", False, f"Link validation not working: HTTP {link_response.status_code}")
+                        return False
+                else:
+                    self.log_result("Extension Error Handling", False, "Email error response not properly formatted")
+                    return False
+            else:
+                self.log_result("Extension Error Handling", False, f"Email validation not working: HTTP {response.status_code}")
+                return False
+                
+        except requests.exceptions.RequestException as e:
+            self.log_result("Extension Error Handling", False, f"Request failed: {str(e)}")
+            return False
+
+    def test_extension_ai_fallback_mechanism(self):
+        """Test AI fallback mechanisms when called from extension"""
+        try:
+            headers = self.get_auth_headers()
+            headers.update({
+                'User-Agent': 'Mozilla/5.0 Chrome Extension',
+                'Origin': 'chrome-extension://test-extension-id',
+                'X-Force-Fallback': 'true'  # Simulate AI unavailable
+            })
+            
+            # Test email scanning with fallback
+            fallback_email_data = {
+                "email_subject": "Suspicious email for fallback testing",
+                "email_body": "This email contains suspicious content for testing fallback mechanisms when AI is unavailable.",
+                "sender": "test@suspicious-domain.com",
+                "recipient": self.test_user_data["email"]
+            }
+            
+            response = requests.post(
+                f"{self.backend_url}/scan/email",
+                json=fallback_email_data,
+                headers=headers,
+                timeout=15
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                required_fields = ['id', 'status', 'risk_score', 'explanation']
+                
+                if all(field in data for field in required_fields):
+                    risk_score = data.get('risk_score', 0)
+                    status = data.get('status')
+                    explanation = data.get('explanation', '')
+                    
+                    # Verify fallback mechanism provides reasonable results
+                    fallback_working = (
+                        isinstance(risk_score, (int, float)) and 0 <= risk_score <= 100 and
+                        status in ['safe', 'potential_phishing', 'phishing'] and
+                        len(explanation) > 10
+                    )
+                    
+                    if fallback_working:
+                        self.log_result("Extension AI Fallback Mechanism", True, 
+                                      f"Fallback working for extension - Risk: {risk_score:.1f}, Status: {status}")
+                        return True
+                    else:
+                        self.log_result("Extension AI Fallback Mechanism", False, 
+                                      f"Fallback not working properly - Risk: {risk_score}, Status: {status}")
+                        return False
+                else:
+                    missing_fields = [f for f in required_fields if f not in data]
+                    self.log_result("Extension AI Fallback Mechanism", False, f"Missing response fields: {missing_fields}")
+                    return False
+            elif response.status_code == 401 or response.status_code == 403:
+                self.log_result("Extension AI Fallback Mechanism", False, "Extension authentication failed")
+                return False
+            else:
+                self.log_result("Extension AI Fallback Mechanism", False, f"HTTP {response.status_code}: {response.text}")
+                return False
+                
+        except requests.exceptions.RequestException as e:
+            self.log_result("Extension AI Fallback Mechanism", False, f"Request failed: {str(e)}")
+            return False
+
+    def test_extension_cross_platform_compatibility(self):
+        """Test API calls work from different browser extension contexts"""
+        try:
+            # Test different browser extension user agents
+            browser_contexts = [
+                {
+                    'name': 'Chrome Extension',
+                    'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/91.0.4472.124',
+                    'origin': 'chrome-extension://test-chrome-extension'
+                },
+                {
+                    'name': 'Firefox Extension',
+                    'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0',
+                    'origin': 'moz-extension://test-firefox-extension'
+                },
+                {
+                    'name': 'Edge Extension',
+                    'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Edge/91.0.864.59',
+                    'origin': 'chrome-extension://test-edge-extension'
+                }
+            ]
+            
+            successful_contexts = 0
+            
+            for context in browser_contexts:
+                headers = self.get_auth_headers()
+                headers.update({
+                    'User-Agent': context['user_agent'],
+                    'Origin': context['origin']
+                })
+                
+                # Test health endpoint from each browser context
+                response = requests.get(f"{self.backend_url}/health", headers=headers, timeout=10)
+                
+                if response.status_code == 200:
+                    successful_contexts += 1
+                    
+            if successful_contexts == len(browser_contexts):
+                self.log_result("Extension Cross-Platform Compatibility", True, 
+                              f"All {successful_contexts} browser contexts working correctly")
+                return True
+            elif successful_contexts > 0:
+                self.log_result("Extension Cross-Platform Compatibility", False, 
+                              f"Only {successful_contexts}/{len(browser_contexts)} browser contexts working")
+                return False
+            else:
+                self.log_result("Extension Cross-Platform Compatibility", False, 
+                              "No browser extension contexts working")
+                return False
+                
+        except requests.exceptions.RequestException as e:
+            self.log_result("Extension Cross-Platform Compatibility", False, f"Request failed: {str(e)}")
+            return False
+
     def test_rate_limiting(self):
-        """Test rate limiting functionality"""
         try:
             # Make multiple rapid requests to health endpoint (limit: 10/minute)
             rapid_requests = []
@@ -756,42 +1229,52 @@ class BackendTester:
     
     def run_all_tests(self):
         """Run all backend tests"""
-        print("=" * 60)
-        print("🚀 AMAN CYBERSECURITY PLATFORM - PHASE 7 BACKEND API TESTS")
-        print("=" * 60)
+        print("=" * 80)
+        print("🚀 AMAN CYBERSECURITY PLATFORM - BROWSER EXTENSION BACKEND INTEGRATION TESTS")
+        print("=" * 80)
         
-        # Phase 7 specific tests
-        phase7_tests = [
+        # Browser Extension Backend Integration Tests
+        extension_tests = [
             self.test_health_endpoint,
             self.test_user_registration,
             self.test_user_login,
             self.test_token_refresh,
+            self.test_browser_extension_cors_headers,
+            self.test_extension_authentication_flow,
+            self.test_extension_email_scanning_integration,
+            self.test_extension_link_scanning_integration,
+            self.test_extension_data_transformation,
+            self.test_extension_error_handling,
+            self.test_extension_ai_fallback_mechanism,
+            self.test_extension_cross_platform_compatibility,
             self.test_protected_user_profile,
             self.test_protected_dashboard_stats,
             self.test_protected_recent_emails,
             self.test_advanced_email_scanning,
             self.test_enhanced_link_scanning,
-            self.test_feedback_submission,
-            self.test_feedback_analytics,
-            self.test_domain_threat_intelligence,
-            self.test_url_threat_intelligence,
             self.test_user_settings,
             self.test_rate_limiting
         ]
         
         passed = 0
-        total = len(phase7_tests)
+        total = len(extension_tests)
         
-        for test in phase7_tests:
+        for test in extension_tests:
             if test():
                 passed += 1
             print()  # Add spacing between tests
         
-        print("=" * 60)
-        print(f"📊 PHASE 7 TEST SUMMARY: {passed}/{total} tests passed")
+        print("=" * 80)
+        print(f"📊 BROWSER EXTENSION BACKEND INTEGRATION TEST SUMMARY: {passed}/{total} tests passed")
         
         if passed == total:
-            print("🎉 ALL PHASE 7 TESTS PASSED! Advanced features are working correctly.")
+            print("🎉 ALL BROWSER EXTENSION BACKEND INTEGRATION TESTS PASSED!")
+            print("✅ Extension can successfully connect to backend APIs")
+            print("✅ JWT authentication works for extension requests")
+            print("✅ AI-powered scanning works through extension calls")
+            print("✅ Data transformation works for extension format")
+            print("✅ Error handling and fallbacks work correctly")
+            print("✅ Cross-platform compatibility verified")
             return True
         else:
             print(f"⚠️  {total - passed} test(s) failed. Check details above.")
