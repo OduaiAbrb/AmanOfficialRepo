@@ -715,92 +715,11 @@ async def check_url_threat_intelligence(
             detail="Failed to check URL reputation"
         )
 
-# Helper functions (placeholders for AI integration)
-async def _analyze_email_content(email_data: dict) -> float:
-    """Analyze email content for threats - placeholder for AI integration"""
-    content = email_data.get("email_body", "").lower()
-    subject = email_data.get("email_subject", "").lower()
-    sender = email_data.get("sender", "").lower()
-    
-    risk_score = 0.0
-    
-    # Placeholder risk assessment logic
-    suspicious_keywords = [
-        "urgent", "verify account", "click here", "limited time", "suspended",
-        "congratulations", "winner", "claim now", "act fast", "expires today"
-    ]
-    
-    suspicious_domains = [
-        "bit.ly", "tinyurl.com", "suspicious-domain.net", "fake-bank.com",
-        "win-now.fake", "prizes.fake"
-    ]
-    
-    # Check for suspicious keywords
-    for keyword in suspicious_keywords:
-        if keyword in content or keyword in subject:
-            risk_score += 15
-    
-    # Check sender domain
-    for domain in suspicious_domains:
-        if domain in sender:
-            risk_score += 30
-    
-    # Additional checks
-    if "@" not in sender or "." not in sender:
-        risk_score += 20
-    
-    if len(content) < 50:  # Very short emails can be suspicious
-        risk_score += 10
-    
-    return min(risk_score, 100.0)
-
-async def _analyze_link(url: str) -> float:
-    """Analyze link for threats - placeholder for threat intelligence integration"""
-    risk_score = 0.0
-    
-    suspicious_domains = [
-        "bit.ly", "tinyurl.com", "suspicious-site.com", "malware-site.net"
-    ]
-    
-    for domain in suspicious_domains:
-        if domain in url:
-            risk_score += 50
-    
-    if _is_shortened_url(url):
-        risk_score += 20
-    
-    return min(risk_score, 100.0)
-
+# Helper functions
 def _is_shortened_url(url: str) -> bool:
     """Check if URL is a shortened URL"""
     short_domains = ["bit.ly", "tinyurl.com", "t.co", "goo.gl", "ow.ly"]
     return any(domain in url for domain in short_domains)
-
-def _generate_recommendations(status: ScanStatus, risk_score: float) -> List[str]:
-    """Generate security recommendations based on scan results"""
-    recommendations = []
-    
-    if status == ScanStatus.PHISHING:
-        recommendations.extend([
-            "Do not click any links in this email",
-            "Do not download any attachments",
-            "Report this email as phishing to your IT department",
-            "Delete this email immediately"
-        ])
-    elif status == ScanStatus.POTENTIAL_PHISHING:
-        recommendations.extend([
-            "Exercise caution with this email",
-            "Verify sender identity through alternative means",
-            "Avoid clicking suspicious links",
-            "Consider reporting if you suspect phishing"
-        ])
-    else:
-        recommendations.extend([
-            "Email appears safe to read",
-            "Still exercise normal email security practices"
-        ])
-    
-    return recommendations
 
 # Global exception handler
 @app.exception_handler(Exception)
