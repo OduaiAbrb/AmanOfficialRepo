@@ -1,0 +1,84 @@
+{
+  "timestamp": "2025-07-25T01:02:21.454821",
+  "backend_url": "https://4ec11e88-5adb-422f-8d39-cfb44f6f0f9a.preview.emergentagent.com/api",
+  "phase": "Phase 6 - Secure Backend API Development",
+  "results": [
+    {
+      "test": "Enhanced Health Check",
+      "success": false,
+      "details": "HTTP 500: Internal Server Error",
+      "timestamp": "2025-07-25T01:02:13.114102"
+    },
+    {
+      "test": "Rate Limiting",
+      "success": false,
+      "details": "Rate limiting not triggered - all requests succeeded",
+      "timestamp": "2025-07-25T01:02:15.449484"
+    },
+    {
+      "test": "User Registration",
+      "success": false,
+      "details": "HTTP 500: Internal Server Error",
+      "timestamp": "2025-07-25T01:02:16.000222"
+    },
+    {
+      "test": "User Login",
+      "success": false,
+      "details": "HTTP 500: Internal Server Error",
+      "timestamp": "2025-07-25T01:02:16.553576"
+    },
+    {
+      "test": "Token Refresh",
+      "success": false,
+      "details": "No refresh token available",
+      "timestamp": "2025-07-25T01:02:17.054922"
+    },
+    {
+      "test": "Authentication Required",
+      "success": false,
+      "details": "Expected 401, got 500",
+      "timestamp": "2025-07-25T01:02:17.608003"
+    },
+    {
+      "test": "Protected User Profile",
+      "success": false,
+      "details": "HTTP 500: Internal Server Error",
+      "timestamp": "2025-07-25T01:02:18.183627"
+    },
+    {
+      "test": "Protected Dashboard Stats",
+      "success": false,
+      "details": "HTTP 500: Internal Server Error",
+      "timestamp": "2025-07-25T01:02:18.734514"
+    },
+    {
+      "test": "Protected Recent Emails",
+      "success": false,
+      "details": "HTTP 500: Internal Server Error",
+      "timestamp": "2025-07-25T01:02:19.287286"
+    },
+    {
+      "test": "Email Scanning",
+      "success": false,
+      "details": "HTTP 500: Internal Server Error",
+      "timestamp": "2025-07-25T01:02:19.838082"
+    },
+    {
+      "test": "Link Scanning",
+      "success": false,
+      "details": "HTTP 500: Internal Server Error",
+      "timestamp": "2025-07-25T01:02:20.390694"
+    },
+    {
+      "test": "User Settings",
+      "success": false,
+      "details": "GET failed: HTTP 500",
+      "timestamp": "2025-07-25T01:02:20.952988"
+    }
+  ],
+  "summary": {
+    "total_tests": 12,
+    "passed": 0,
+    "failed": 12
+  }
+}
