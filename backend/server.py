@@ -65,8 +65,8 @@ app.add_exception_handler(RateLimitExceeded, lambda request, exc: JSONResponse(
 ))
 app.add_middleware(SlowAPIMiddleware)
 
-# Add security middleware
-app.add_middleware(SecurityMiddleware)
+# Add security middleware (temporarily disabled due to implementation issues)
+# app.add_middleware(SecurityMiddleware)
 
 # CORS middleware with security considerations
 allowed_origins = [
