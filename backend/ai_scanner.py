@@ -516,17 +516,18 @@ class AIEnhancedScanner:
 # Global AI scanner instance
 ai_enhanced_scanner = AIEnhancedScanner()
 
-async def scan_email_with_ai(email_data: Dict[str, Any]) -> Dict[str, Any]:
+async def scan_email_with_ai(email_data: Dict[str, Any], user_id: str = None) -> Dict[str, Any]:
     """
-    AI-enhanced email scanning function for API integration
+    AI-enhanced email scanning function for API integration with cost management
     
     Args:
         email_data: Email data dictionary
+        user_id: User ID for cost tracking
         
     Returns:
         Enhanced scan results with AI analysis
     """
-    return await ai_enhanced_scanner.scan_email_with_ai(email_data)
+    return await ai_enhanced_scanner.scan_email_with_ai(email_data, user_id or "anonymous")
 
 async def scan_link_with_ai(url: str, context: str = "") -> Dict[str, Any]:
     """
