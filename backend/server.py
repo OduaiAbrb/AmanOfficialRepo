@@ -117,7 +117,6 @@ async def health_check(request: Request):
     """Health check endpoint with system status"""
     try:
         # Check database connectivity
-        from database import get_database
         db = get_database()
         await db.command('ping')
         db_status = "healthy"
