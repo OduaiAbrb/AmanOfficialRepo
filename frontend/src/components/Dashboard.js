@@ -131,8 +131,39 @@ const Dashboard = () => {
   };
 
   const renderMainContent = () => {
+    if (loading) {
+      return (
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading dashboard data...</p>
+          </div>
+        </div>
+      );
+    }
+
+    if (error) {
+      return (
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center">
+            <div className="w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <span className="text-4xl">⚠️</span>
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Error Loading Data</h2>
+            <p className="text-gray-600 mb-6">{error}</p>
+            <button 
+              onClick={fetchDashboardData}
+              className="btn-primary"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      );
+    }
+
     if (currentPage === 'profile') {
-      return <ProfilePage userProfile={userProfile} />;
+      return <ProfilePage user={user} />;
     }
     
     if (currentPage === 'settings') {
@@ -150,7 +181,7 @@ const Dashboard = () => {
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Security Dashboard</h1>
-            <p className="text-gray-600 mt-1">Welcome back, {userProfile?.name}</p>
+            <p className="text-gray-600 mt-1">Welcome back, {user?.name || 'User'}</p>
           </div>
           <div className="flex items-center space-x-4">
             <div className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
@@ -224,25 +255,32 @@ const Dashboard = () => {
             </div>
           </div>
           <div className="divide-y divide-gray-200">
-            {recentEmails.map((email) => (
-              <div key={email.id} className="p-6 hover:bg-gray-50 transition-colors">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <div className="text-2xl">{getStatusIcon(email.status)}</div>
-                    <div>
-                      <h3 className="font-medium text-gray-900">{email.subject}</h3>
-                      <p className="text-sm text-gray-600">From: {email.sender}</p>
+            {recentEmails.length > 0 ? (
+              recentEmails.map((email) => (
+                <div key={email.id} className="p-6 hover:bg-gray-50 transition-colors">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <div className="text-2xl">{getStatusIcon(email.status)}</div>
+                      <div>
+                        <h3 className="font-medium text-gray-900">{email.subject}</h3>
+                        <p className="text-sm text-gray-600">From: {email.sender}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-4">
+                      <span className={`px-3 py-1 text-xs font-medium rounded-full border ${getStatusColor(email.status)}`}>
+                        {email.status.replace('_', ' ').toUpperCase()}
+                      </span>
+                      <span className="text-sm text-gray-500">{email.time}</span>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-4">
-                    <span className={`px-3 py-1 text-xs font-medium rounded-full border ${getStatusColor(email.status)}`}>
-                      {email.status.replace('_', ' ').toUpperCase()}
-                    </span>
-                    <span className="text-sm text-gray-500">{email.time}</span>
-                  </div>
                 </div>
+              ))
+            ) : (
+              <div className="p-12 text-center">
+                <div className="text-6xl mb-4">📧</div>
+                <p className="text-gray-500">No recent email scans available</p>
               </div>
-            ))}
+            )}
           </div>
         </div>
       </div>
