@@ -56,13 +56,29 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Initialize FastAPI app
+# Lifespan context manager for startup and shutdown
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    await connect_to_mongo()
+    await init_collections()
+    await realtime_manager.start_background_tasks()
+    logger.info("Application startup completed with real-time features")
+    
+    yield
+    
+    # Shutdown
+    await close_mongo_connection()
+    logger.info("Application shutdown completed")
+
+# Initialize FastAPI app with lifespan management
 app = FastAPI(
-    title="Aman Cybersecurity Platform",
-    description="Advanced cybersecurity platform with AI-powered phishing detection",
-    version="1.0.0",
+    title="Aman Cybersecurity Platform API",
+    description="AI-powered cybersecurity platform with real-time threat detection and management",
+    version="2.0.0",
     docs_url="/docs" if os.getenv("ENVIRONMENT") == "development" else None,
-    redoc_url="/redoc" if os.getenv("ENVIRONMENT") == "development" else None
+    redoc_url="/redoc" if os.getenv("ENVIRONMENT") == "development" else None,
+    lifespan=lifespan
 )
 
 # Add rate limiting
