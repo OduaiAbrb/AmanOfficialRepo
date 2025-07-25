@@ -1,101 +1,125 @@
 {
-  "timestamp": "2025-07-25T13:14:05.335312",
+  "timestamp": "2025-07-25T16:26:49.370071",
   "backend_url": "https://30cbd4d9-b4c7-4721-ba22-5b885cf844b0.preview.emergentagent.com/api",
   "results": [
     {
       "test": "Enhanced Health Check",
       "success": true,
       "details": "Status: healthy, DB: healthy, API: healthy",
-      "timestamp": "2025-07-25T13:14:01.875094"
+      "timestamp": "2025-07-25T16:26:28.504606"
     },
     {
       "test": "User Registration",
       "success": true,
-      "details": "User registered: testuser_1753449241@cybersec.com",
-      "timestamp": "2025-07-25T13:14:02.189900"
+      "details": "User registered: testuser_1753460788@cybersec.com",
+      "timestamp": "2025-07-25T16:26:28.846172"
     },
     {
       "test": "User Login",
       "success": true,
       "details": "Login successful, token type: bearer",
-      "timestamp": "2025-07-25T13:14:02.476921"
+      "timestamp": "2025-07-25T16:26:29.143187"
     },
     {
       "test": "Token Refresh",
       "success": true,
       "details": "Token refresh successful",
-      "timestamp": "2025-07-25T13:14:02.824818"
+      "timestamp": "2025-07-25T16:26:29.501972"
+    },
+    {
+      "test": "Browser Extension CORS Headers",
+      "success": false,
+      "details": "Preflight request failed: HTTP 400",
+      "timestamp": "2025-07-25T16:26:29.555045"
+    },
+    {
+      "test": "Extension Authentication Flow",
+      "success": true,
+      "details": "Extension authentication successful, token works for API calls",
+      "timestamp": "2025-07-25T16:26:29.885906"
+    },
+    {
+      "test": "Extension Email Scanning Integration",
+      "success": true,
+      "details": "Extension email scanning working - Risk: 95.0, Status: phishing",
+      "timestamp": "2025-07-25T16:26:33.766603"
+    },
+    {
+      "test": "Extension Link Scanning Integration",
+      "success": true,
+      "details": "Extension link scanning working - Risk: 85.0, Categories: 4",
+      "timestamp": "2025-07-25T16:26:37.008327"
+    },
+    {
+      "test": "Extension Data Transformation",
+      "success": true,
+      "details": "API responses properly formatted for extension - Stats and emails available",
+      "timestamp": "2025-07-25T16:26:37.112141"
+    },
+    {
+      "test": "Extension Error Handling",
+      "success": true,
+      "details": "Error handling working properly for extension requests",
+      "timestamp": "2025-07-25T16:26:37.220911"
+    },
+    {
+      "test": "Extension AI Fallback Mechanism",
+      "success": true,
+      "details": "Fallback working for extension - Risk: 35.0, Status: potential_phishing",
+      "timestamp": "2025-07-25T16:26:39.492768"
+    },
+    {
+      "test": "Extension Cross-Platform Compatibility",
+      "success": true,
+      "details": "All 3 browser contexts working correctly",
+      "timestamp": "2025-07-25T16:26:39.679359"
     },
     {
       "test": "Protected User Profile",
       "success": true,
-      "details": "User: Test User (testuser_1753449241@cybersec.com) - Role: user",
-      "timestamp": "2025-07-25T13:14:02.877927"
+      "details": "User: Test User (testuser_1753460788@cybersec.com) - Role: user",
+      "timestamp": "2025-07-25T16:26:39.730971"
     },
     {
       "test": "Protected Dashboard Stats",
       "success": true,
-      "details": "Stats: Phishing=0, Safe=0, Potential=0, Accuracy=0.0%",
-      "timestamp": "2025-07-25T13:14:02.935350"
+      "details": "Stats: Phishing=1, Safe=0, Potential=1, Accuracy=95.5%",
+      "timestamp": "2025-07-25T16:26:39.786213"
     },
     {
       "test": "Protected Recent Emails",
       "success": true,
-      "details": "Empty email list returned (valid for new user)",
-      "timestamp": "2025-07-25T13:14:02.991131"
+      "details": "Retrieved 2 emails with valid structure and risk scores",
+      "timestamp": "2025-07-25T16:26:39.837241"
     },
     {
       "test": "Advanced Email Scanning",
       "success": true,
-      "details": "Phishing detected: Risk=70.3, Status=phishing, Threats=3, Sources=4",
-      "timestamp": "2025-07-25T13:14:03.046539"
+      "details": "Phishing detected: Risk=95.0, Status=phishing, Threats=4, Sources=1",
+      "timestamp": "2025-07-25T16:26:43.377842"
     },
     {
       "test": "Enhanced Link Scanning",
       "success": true,
-      "details": "Suspicious link detected: Risk=64.0, Status=potential_phishing, Categories=1",
-      "timestamp": "2025-07-25T13:14:03.106163"
-    },
-    {
-      "test": "Feedback Submission",
-      "success": false,
-      "details": "HTTP 400: {\"detail\":\"Failed to submit feedback\"}",
-      "timestamp": "2025-07-25T13:14:03.216281"
-    },
-    {
-      "test": "Feedback Analytics",
-      "success": true,
-      "details": "Analytics: Total=0, Accuracy=0%, Breakdown=0 types",
-      "timestamp": "2025-07-25T13:14:03.268887"
-    },
-    {
-      "test": "Domain Threat Intelligence",
-      "success": true,
-      "details": "Domain analysis: secure-bank-update.com -> Risk=45.0, Level=potential_phishing, Category=suspicious, Sources=1",
-      "timestamp": "2025-07-25T13:14:03.325873"
-    },
-    {
-      "test": "URL Threat Intelligence",
-      "success": true,
-      "details": "URL analysis: Risk=45.0, Level=potential_phishing, Category=suspicious, Sources=1",
-      "timestamp": "2025-07-25T13:14:03.381346"
+      "details": "Suspicious link detected: Risk=90.0, Status=phishing, Categories=4",
+      "timestamp": "2025-07-25T16:26:47.379667"
     },
     {
       "test": "User Settings",
       "success": true,
       "details": "Settings GET/PUT operations working correctly",
-      "timestamp": "2025-07-25T13:14:03.493761"
+      "timestamp": "2025-07-25T16:26:47.521824"
     },
     {
       "test": "Rate Limiting",
       "success": false,
       "details": "Rate limiting not triggered - all requests succeeded",
-      "timestamp": "2025-07-25T13:14:05.332818"
+      "timestamp": "2025-07-25T16:26:49.367401"
     }
   ],
   "summary": {
-    "total_tests": 15,
-    "passed": 13,
+    "total_tests": 19,
+    "passed": 17,
     "failed": 2
   }
 }
