@@ -1,103 +1,12 @@
 {
-  "timestamp": "2025-07-25T14:19:59.630915",
+  "timestamp": "2025-07-25T14:20:39.335872",
   "backend_url": "https://30cbd4d9-b4c7-4721-ba22-5b885cf844b0.preview.emergentagent.com/api",
   "phase": "Phase 8 AI Integration",
-  "results": [
-    {
-      "test": "Gemini API Configuration",
-      "success": true,
-      "details": "API responding correctly: Risk=10.0",
-      "timestamp": "2025-07-25T14:18:50.357876"
-    },
-    {
-      "test": "AI Email Scanning - Legitimate Email",
-      "success": true,
-      "details": "Correctly identified as safe: Risk=10.0, Status=safe",
-      "timestamp": "2025-07-25T14:18:51.965229"
-    },
-    {
-      "test": "AI Email Scanning - Phishing Detection",
-      "success": true,
-      "details": "Correctly detected phishing: Risk=95.0, Status=phishing, Threats=5",
-      "timestamp": "2025-07-25T14:18:55.801849"
-    },
-    {
-      "test": "AI Email Scanning - Urgency Detection",
-      "success": true,
-      "details": "Detected urgency manipulation: Risk=95.0, Status=phishing",
-      "timestamp": "2025-07-25T14:18:59.746357"
-    },
-    {
-      "test": "AI Email Scanning - Suspicious Links",
-      "success": true,
-      "details": "Detected suspicious links: Risk=95.0, Status=phishing",
-      "timestamp": "2025-07-25T14:19:03.908191"
-    },
-    {
-      "test": "AI Email Scanning - Content Length Limit",
-      "success": true,
-      "details": "Correctly rejected large content: 422",
-      "timestamp": "2025-07-25T14:19:03.987857"
-    },
-    {
-      "test": "AI Link Scanning - Legitimate URL",
-      "success": true,
-      "details": "Correctly identified as safe: Risk=10.0, Status=safe",
-      "timestamp": "2025-07-25T14:19:05.702365"
-    },
-    {
-      "test": "AI Link Scanning - Malicious URL",
-      "success": true,
-      "details": "Correctly detected malicious URL: Risk=95.0, Status=phishing, Categories=5",
-      "timestamp": "2025-07-25T14:19:11.006822"
-    },
-    {
-      "test": "AI Link Scanning - Shortened URLs",
-      "success": true,
-      "details": "Detected 3/3 shortened URLs correctly",
-      "timestamp": "2025-07-25T14:19:20.791046"
-    },
-    {
-      "test": "AI Link Scanning - URL Length Limit",
-      "success": true,
-      "details": "Correctly rejected long URL: 422",
-      "timestamp": "2025-07-25T14:19:20.897933"
-    },
-    {
-      "test": "AI Integration Security Logging",
-      "success": true,
-      "details": "Scan completed with ID 5db8e42b-5778-4722-909a-43c63427a75d - security logging should be active",
-      "timestamp": "2025-07-25T14:19:22.700325"
-    },
-    {
-      "test": "AI Fallback Mechanism",
-      "success": true,
-      "details": "Fallback working: Risk=45.0, Status=potential_phishing",
-      "timestamp": "2025-07-25T14:19:25.087850"
-    },
-    {
-      "test": "AI Enhanced Metadata Storage",
-      "success": true,
-      "details": "Enhanced metadata captured for scan 7a4f6d29-8dfc-4615-9328-d3572e3242a4",
-      "timestamp": "2025-07-25T14:19:27.397673"
-    },
-    {
-      "test": "JWT Authentication on AI Endpoints",
-      "success": true,
-      "details": "Correctly rejected unauthenticated request: 403",
-      "timestamp": "2025-07-25T14:19:27.455217"
-    },
-    {
-      "test": "Rate Limiting on AI Endpoints",
-      "success": false,
-      "details": "Rate limiting not triggered - all requests succeeded",
-      "timestamp": "2025-07-25T14:19:59.628299"
-    }
-  ],
+  "results": [],
   "summary": {
-    "total_tests": 15,
-    "passed": 14,
-    "failed": 1,
-    "success_rate": 93.33333333333333
+    "total_tests": 0,
+    "passed": 0,
+    "failed": 0,
+    "success_rate": 0
   }
 }
