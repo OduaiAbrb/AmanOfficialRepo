@@ -16,6 +16,14 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  // WebSocket connection for real-time updates
+  const { 
+    statistics: realtimeStats, 
+    isConnected, 
+    connectionStatus,
+    requestStatistics 
+  } = useWebSocket();
+
   useEffect(() => {
     if (!isAuthenticated) {
       navigate('/auth');
