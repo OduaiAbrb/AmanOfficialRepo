@@ -515,9 +515,18 @@ async def scan_link(
     link_request: LinkScanRequest,
     current_user: UserResponse = Depends(get_current_active_user)
 ):
-    """Scan individual link for threats using advanced threat intelligence"""
+    """Scan individual link for threats using AI-enhanced threat intelligence"""
     try:
-        # Validate URL
+        client_ip = IPValidator.get_client_ip(request)
+        
+        # Enhanced security: Validate URL format and length
+        if not link_request.url or len(link_request.url) > 2000:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid or too long URL"
+            )
+        
+        # Validate URL format
         from security import InputValidator
         if not InputValidator.validate_url(link_request.url):
             raise HTTPException(
@@ -525,9 +534,22 @@ async def scan_link(
                 detail="Invalid URL format"
             )
         
-        # Use advanced link scanning logic
-        context = getattr(link_request, 'context', '')
-        scan_results = scan_link_advanced(link_request.url, context)
+        # Log scan attempt for security monitoring
+        log_security_event("LINK_SCAN_ATTEMPT", {
+            "user_id": current_user.id,
+            "url": link_request.url[:100],  # Truncate for logging
+            "url_length": len(link_request.url)
+        }, client_ip)
+        
+        # Use AI-enhanced link scanning with fallback
+        try:
+            context = getattr(link_request, 'context', '')
+            scan_results = await scan_link_with_ai(link_request.url, context)
+            logger.info(f"AI link scan successful for user {current_user.email}")
+        except Exception as ai_error:
+            logger.warning(f"AI link scanning failed, falling back to advanced scanning: {ai_error}")
+            context = getattr(link_request, 'context', '')
+            scan_results = scan_link_advanced(link_request.url, context)
         
         risk_score = scan_results.get('risk_score', 0.0)
         risk_level = scan_results.get('risk_level', 'safe')
@@ -546,13 +568,24 @@ async def scan_link(
         # Extract threat categories from indicators
         threat_categories = list(set(indicator.get('threat_type', '') for indicator in threat_indicators))
         
-        # Check for shortened URL
-        is_shortened = _is_shortened_url(link_request.url)
+        # Check for shortened URL with enhanced detection
+        is_shortened = _is_shortened_url(link_request.url) or any(
+            domain in link_request.url.lower() 
+            for domain in ['shorturl', 'tiny', 'tinylink', 'shortlink', 'sl.ly']
+        )
         
-        # For now, redirect_chain is empty (could be enhanced with actual URL following)
+        # Enhanced redirect chain detection (placeholder for now)
         redirect_chain = []
         
-        logger.info(f"Link scan completed for user {current_user.email}: url={link_request.url}, risk_score={risk_score}")
+        # Enhanced security logging
+        log_security_event("LINK_SCAN_COMPLETED", {
+            "url": link_request.url[:100],
+            "risk_score": risk_score,
+            "status": status.value,
+            "ai_powered": scan_results.get('metadata', {}).get('ai_powered', False)
+        }, client_ip)
+        
+        logger.info(f"Link scan completed for user {current_user.email}: url={link_request.url[:50]}, risk_score={risk_score}")
         
         return LinkScanResponse(
             url=link_request.url,
@@ -567,9 +600,11 @@ async def scan_link(
     except HTTPException:
         raise
     except Exception as e:
+        client_ip = IPValidator.get_client_ip(request)
+        log_security_event("LINK_SCAN_ERROR", {"error": str(e), "url": link_request.url[:100]}, client_ip)
         logger.error(f"Link scan error: {e}")
         raise HTTPException(
-            status_code=500,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Link scan failed"
         )
 
