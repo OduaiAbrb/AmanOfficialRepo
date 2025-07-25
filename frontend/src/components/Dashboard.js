@@ -134,7 +134,11 @@ const Dashboard = () => {
     { id: 'intelligence', icon: '🧠', label: 'Threat Intelligence', path: '/dashboard/intelligence', comingSoon: true },
     { id: 'team', icon: '👥', label: 'Team Overview', path: '/dashboard/team', comingSoon: true },
     { id: 'profile', icon: '👤', label: 'User Profile', path: '/dashboard/profile' },
-    { id: 'settings', icon: '⚙️', label: 'Settings', path: '/dashboard/settings' }
+    { id: 'settings', icon: '⚙️', label: 'Settings', path: '/dashboard/settings' },
+    // Admin panel link for admin users
+    ...(user && ['admin', 'super_admin'].includes(user.role) ? [
+      { id: 'admin', icon: '🔒', label: 'Admin Panel', path: '/admin', isAdmin: true }
+    ] : [])
   ];
 
   const handleNavigation = (item) => {
