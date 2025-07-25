@@ -1,0 +1,41 @@
+{
+  "timestamp": "2025-07-24T23:35:45.799234",
+  "backend_url": "https://4ec11e88-5adb-422f-8d39-cfb44f6f0f9a.preview.emergentagent.com/api",
+  "results": [
+    {
+      "test": "Health Check",
+      "success": true,
+      "details": "Status: healthy, Service: Aman Cybersecurity Platform",
+      "timestamp": "2025-07-24T23:35:45.628116"
+    },
+    {
+      "test": "Dashboard Stats",
+      "success": true,
+      "details": "Phishing: 12, Safe: 485, Potential: 7",
+      "timestamp": "2025-07-24T23:35:45.680500"
+    },
+    {
+      "test": "Recent Emails",
+      "success": true,
+      "details": "Retrieved 5 emails with valid structure",
+      "timestamp": "2025-07-24T23:35:45.735165"
+    },
+    {
+      "test": "User Profile",
+      "success": true,
+      "details": "User: John Doe (john.doe@company.com) at TechCorp Inc.",
+      "timestamp": "2025-07-24T23:35:45.789453"
+    },
+    {
+      "test": "MongoDB Connection",
+      "success": true,
+      "details": "Connection confirmed in backend logs",
+      "timestamp": "2025-07-24T23:35:45.799098"
+    }
+  ],
+  "summary": {
+    "total_tests": 5,
+    "passed": 5,
+    "failed": 0
+  }
+}
