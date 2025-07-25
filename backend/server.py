@@ -37,8 +37,8 @@ from auth import (
     verify_token, get_user_by_id, update_user_last_login
 )
 from security import (
-    limiter, SecurityMiddleware, validate_input, log_security_event,
-    auth_rate_limiter, IPValidator
+    SecurityMiddleware, IPValidator, RateLimiter, InputValidator, log_security_event, validate_input,
+    limiter, auth_rate_limiter
 )
 from database import (
     get_database, connect_to_mongo, close_mongo_connection, init_collections,
