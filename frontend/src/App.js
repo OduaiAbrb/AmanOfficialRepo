@@ -4,6 +4,7 @@ import './App.css';
 import { AuthProvider } from './contexts/AuthContext';
 import LandingPage from './components/LandingPage';
 import Dashboard from './components/Dashboard';
+import AdminDashboard from './components/AdminDashboard';
 import AuthPage from './components/AuthPage';
 import ProtectedRoute from './components/ProtectedRoute';
 
