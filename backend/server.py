@@ -482,6 +482,30 @@ async def scan_email(
         
         scan_result = await EmailScanDatabase.create_email_scan(scan_data)
         
+        # Send real-time notifications
+        try:
+            # Convert scan result to notification format
+            notification_data = {
+                "id": scan_result.id,
+                "status": status.value,
+                "risk_score": risk_score,
+                "explanation": explanation,
+                "threat_sources": threat_sources,
+                "detected_threats": detected_threats,
+                "recommendations": recommendations
+            }
+            
+            # Send threat notification if dangerous
+            if status in [ScanStatus.POTENTIAL_PHISHING, ScanStatus.PHISHING]:
+                await notify_threat_detected(current_user.id, notification_data)
+            
+            # Send scan completion notification
+            await notify_scan_completed(current_user.id, notification_data)
+            
+        except Exception as notification_error:
+            # Don't fail the scan if notifications fail
+            logger.warning(f"Real-time notification failed: {notification_error}")
+        
         # Enhanced security logging
         log_security_event("EMAIL_SCAN_COMPLETED", {
             "scan_id": scan_result.id,
