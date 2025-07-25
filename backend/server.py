@@ -37,7 +37,7 @@ from auth import (
     verify_token, get_user_by_id, update_user_last_login
 )
 from security import (
-    SecurityMiddleware, IPValidator, RateLimiter, InputValidator, log_security_event, validate_input,
+    SecurityMiddleware, IPValidator, InputValidator, log_security_event, validate_input,
     limiter, auth_rate_limiter
 )
 from database import (
