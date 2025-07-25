@@ -354,16 +354,25 @@ const Dashboard = () => {
                   className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
                     currentPage === item.id
                       ? 'bg-primary text-white'
+                      : item.isAdmin
+                      ? 'text-red-700 hover:bg-red-50 border border-red-200'
                       : 'text-gray-700 hover:bg-gray-100'
                   }`}
                 >
                   <span className="text-lg">{item.icon}</span>
                   {sidebarOpen && (
                     <>
-                      <span className="font-medium">{item.label}</span>
+                      <span className={`font-medium ${item.isAdmin ? 'text-red-700' : ''}`}>
+                        {item.label}
+                      </span>
                       {item.comingSoon && (
                         <span className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded">
                           Soon
+                        </span>
+                      )}
+                      {item.isAdmin && (
+                        <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded">
+                          Admin
                         </span>
                       )}
                     </>
