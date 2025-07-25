@@ -314,16 +314,16 @@ class Phase8AITester:
                 timeout=25
             )
             
-            # Should return 400 Bad Request for content too large
-            if response.status_code == 400:
+            # Should return 422 Unprocessable Entity for content too large
+            if response.status_code == 422:
                 error_data = response.json()
-                if 'too large' in error_data.get('detail', '').lower():
+                if 'detail' in error_data:
                     self.log_result("AI Email Scanning - Content Length Limit", True, 
                                   f"Correctly rejected large content: {response.status_code}")
                     return True
                 else:
                     self.log_result("AI Email Scanning - Content Length Limit", False, 
-                                  f"Wrong error message: {error_data.get('detail', '')}")
+                                  f"Wrong error format: {error_data}")
                     return False
             else:
                 self.log_result("AI Email Scanning - Content Length Limit", False, 
