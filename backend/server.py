@@ -504,7 +504,7 @@ async def scan_email(
         log_security_event("EMAIL_SCAN_ERROR", {"error": str(e)}, client_ip)
         logger.error(f"Email scan error: {e}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=500,
             detail="Email scan failed"
         )
 
