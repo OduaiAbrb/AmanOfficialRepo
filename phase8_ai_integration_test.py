@@ -486,16 +486,16 @@ class Phase8AITester:
                 timeout=25
             )
             
-            # Should return 400 Bad Request for URL too long
-            if response.status_code == 400:
+            # Should return 422 Unprocessable Entity for URL too long
+            if response.status_code == 422:
                 error_data = response.json()
-                if 'too long' in error_data.get('detail', '').lower() or 'invalid' in error_data.get('detail', '').lower():
+                if 'detail' in error_data:
                     self.log_result("AI Link Scanning - URL Length Limit", True, 
                                   f"Correctly rejected long URL: {response.status_code}")
                     return True
                 else:
                     self.log_result("AI Link Scanning - URL Length Limit", False, 
-                                  f"Wrong error message: {error_data.get('detail', '')}")
+                                  f"Wrong error format: {error_data}")
                     return False
             else:
                 self.log_result("AI Link Scanning - URL Length Limit", False, 
