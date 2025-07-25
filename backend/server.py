@@ -580,6 +580,141 @@ async def update_user_settings(
             detail="Settings update failed"
         )
 
+# Feedback endpoints
+@app.post("/api/feedback/scan", response_model=SuccessResponse)
+@limiter.limit("20/minute")
+async def submit_feedback(
+    request: Request,
+    feedback: FeedbackCreate,
+    current_user: UserResponse = Depends(get_current_active_user)
+):
+    """Submit feedback on a scan result"""
+    try:
+        # Validate and sanitize input
+        validated_data = validate_input(feedback.dict())
+        
+        # Submit feedback using the feedback system
+        feedback_result = await submit_scan_feedback(
+            user_id=current_user.id,
+            scan_id=validated_data.get('scan_id'),
+            is_accurate=validated_data.get('is_accurate'),
+            feedback_type=validated_data.get('feedback_type'),
+            comments=validated_data.get('comments', '')
+        )
+        
+        if not feedback_result.get('success'):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=feedback_result.get('error', 'Failed to submit feedback')
+            )
+        
+        logger.info(f"Feedback submitted by user {current_user.email} for scan {validated_data.get('scan_id')}")
+        
+        return SuccessResponse(
+            message="Feedback submitted successfully",
+            data={"feedback_id": feedback_result.get('feedback_id')}
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Feedback submission error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to submit feedback"
+        )
+
+@app.get("/api/feedback/analytics")
+@limiter.limit("10/minute")
+async def get_feedback_analytics(
+    request: Request,
+    current_user: UserResponse = Depends(get_current_active_user)
+):
+    """Get user feedback analytics"""
+    try:
+        analytics = await get_user_feedback_analytics(current_user.id)
+        
+        return {
+            "total_feedback": analytics.get('total_feedback', 0),
+            "accuracy_rate": analytics.get('accuracy_rate', 0.0),
+            "feedback_breakdown": analytics.get('feedback_breakdown', {}),
+            "recent_feedback": analytics.get('recent_feedback', [])
+        }
+        
+    except Exception as e:
+        logger.error(f"Feedback analytics error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to fetch feedback analytics"
+        )
+
+# Threat Intelligence endpoints
+@app.get("/api/threat-intelligence/domain/{domain}")
+@limiter.limit("30/minute")
+async def check_domain_threat_intelligence(
+    request: Request,
+    domain: str,
+    current_user: UserResponse = Depends(get_current_active_user)
+):
+    """Check domain reputation using threat intelligence"""
+    try:
+        # Validate domain format
+        from security import InputValidator
+        if not InputValidator.validate_domain(domain):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid domain format"
+            )
+        
+        # Check domain reputation
+        reputation_data = await check_domain_reputation(domain)
+        
+        logger.info(f"Domain reputation check by user {current_user.email}: {domain}")
+        
+        return reputation_data
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Domain reputation check error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to check domain reputation"
+        )
+
+@app.get("/api/threat-intelligence/url")
+@limiter.limit("30/minute")
+async def check_url_threat_intelligence(
+    request: Request,
+    url: str,
+    current_user: UserResponse = Depends(get_current_active_user)
+):
+    """Check URL reputation using threat intelligence"""
+    try:
+        # Validate URL format
+        from security import InputValidator
+        if not InputValidator.validate_url(url):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid URL format"
+            )
+        
+        # Check URL reputation
+        reputation_data = await check_url_reputation(url)
+        
+        logger.info(f"URL reputation check by user {current_user.email}: {url[:50]}...")
+        
+        return reputation_data
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"URL reputation check error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to check URL reputation"
+        )
+
 # Helper functions (placeholders for AI integration)
 async def _analyze_email_content(email_data: dict) -> float:
     """Analyze email content for threats - placeholder for AI integration"""
