@@ -1,0 +1,103 @@
+{
+  "timestamp": "2025-07-25T14:12:20.389636",
+  "backend_url": "https://30cbd4d9-b4c7-4721-ba22-5b885cf844b0.preview.emergentagent.com/api",
+  "phase": "Phase 8 AI Integration",
+  "results": [
+    {
+      "test": "Gemini API Configuration",
+      "success": true,
+      "details": "API responding correctly: Risk=10.0",
+      "timestamp": "2025-07-25T14:11:29.209647"
+    },
+    {
+      "test": "AI Email Scanning - Legitimate Email",
+      "success": true,
+      "details": "Correctly identified as safe: Risk=10.0, Status=safe",
+      "timestamp": "2025-07-25T14:11:31.472706"
+    },
+    {
+      "test": "AI Email Scanning - Phishing Detection",
+      "success": false,
+      "details": "HTTP 500: {\"error\":\"Internal server error\",\"detail\":\"An unexpected error occurred\"}",
+      "timestamp": "2025-07-25T14:11:35.932046"
+    },
+    {
+      "test": "AI Email Scanning - Urgency Detection",
+      "success": false,
+      "details": "HTTP 500: {\"error\":\"Internal server error\",\"detail\":\"An unexpected error occurred\"}",
+      "timestamp": "2025-07-25T14:11:39.346143"
+    },
+    {
+      "test": "AI Email Scanning - Suspicious Links",
+      "success": false,
+      "details": "HTTP 500: {\"error\":\"Internal server error\",\"detail\":\"An unexpected error occurred\"}",
+      "timestamp": "2025-07-25T14:11:42.679201"
+    },
+    {
+      "test": "AI Email Scanning - Content Length Limit",
+      "success": false,
+      "details": "Should have rejected large content but got: 422",
+      "timestamp": "2025-07-25T14:11:42.755167"
+    },
+    {
+      "test": "AI Link Scanning - Legitimate URL",
+      "success": true,
+      "details": "Correctly identified as safe: Risk=10.0, Status=safe",
+      "timestamp": "2025-07-25T14:11:44.527147"
+    },
+    {
+      "test": "AI Link Scanning - Malicious URL",
+      "success": true,
+      "details": "Correctly detected malicious URL: Risk=90.0, Status=phishing, Categories=5",
+      "timestamp": "2025-07-25T14:11:49.664705"
+    },
+    {
+      "test": "AI Link Scanning - Shortened URLs",
+      "success": true,
+      "details": "Detected 3/3 shortened URLs correctly",
+      "timestamp": "2025-07-25T14:12:00.289179"
+    },
+    {
+      "test": "AI Link Scanning - URL Length Limit",
+      "success": false,
+      "details": "Should have rejected long URL but got: 422",
+      "timestamp": "2025-07-25T14:12:00.382348"
+    },
+    {
+      "test": "AI Integration Security Logging",
+      "success": true,
+      "details": "Scan completed with ID ab26be78-0559-469c-93c1-6b5351d96cbe - security logging should be active",
+      "timestamp": "2025-07-25T14:12:02.226525"
+    },
+    {
+      "test": "AI Fallback Mechanism",
+      "success": false,
+      "details": "HTTP 500: {\"error\":\"Internal server error\",\"detail\":\"An unexpected error occurred\"}",
+      "timestamp": "2025-07-25T14:12:04.707063"
+    },
+    {
+      "test": "AI Enhanced Metadata Storage",
+      "success": true,
+      "details": "Enhanced metadata captured for scan 1f0d30c5-cb90-4302-9f8a-d8cab48f48c9",
+      "timestamp": "2025-07-25T14:12:06.432673"
+    },
+    {
+      "test": "JWT Authentication on AI Endpoints",
+      "success": false,
+      "details": "Should have rejected unauthenticated request but got: 403",
+      "timestamp": "2025-07-25T14:12:06.489481"
+    },
+    {
+      "test": "Rate Limiting on AI Endpoints",
+      "success": false,
+      "details": "Rate limiting not triggered - all requests succeeded",
+      "timestamp": "2025-07-25T14:12:20.387061"
+    }
+  ],
+  "summary": {
+    "total_tests": 15,
+    "passed": 7,
+    "failed": 8,
+    "success_rate": 46.666666666666664
+  }
+}
