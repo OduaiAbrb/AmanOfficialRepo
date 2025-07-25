@@ -1007,6 +1007,270 @@ async def get_ai_cache_stats(
             detail="Failed to fetch AI cache statistics"
         )
 
+# Admin Panel Management endpoints
+@app.get("/api/admin/dashboard/stats")
+@limiter.limit("10/minute")
+async def get_admin_dashboard_statistics(
+    request: Request,
+    current_user: UserResponse = Depends(get_current_active_user)
+):
+    """Get admin dashboard statistics (admin only)"""
+    try:
+        # Only allow admin users
+        if getattr(current_user, 'role', 'user') not in ["admin", "super_admin"]:
+            raise HTTPException(
+                status_code=403,
+                detail="Admin access required"
+            )
+        
+        stats = await get_admin_dashboard_stats()
+        
+        return {
+            "statistics": {
+                "total_users": stats.total_users,
+                "active_users": stats.active_users,
+                "total_organizations": stats.total_organizations,
+                "active_organizations": stats.active_organizations,
+                "today_scans": stats.today_scans,
+                "today_threats": stats.today_threats,
+                "total_threats_blocked": stats.total_threats_blocked,
+                "avg_risk_score": stats.avg_risk_score,
+                "ai_usage_cost": stats.ai_usage_cost,
+                "cache_hit_rate": stats.cache_hit_rate
+            },
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Admin dashboard stats error: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to fetch admin dashboard statistics"
+        )
+
+@app.get("/api/admin/users")
+@limiter.limit("20/minute")
+async def get_admin_user_management(
+    request: Request,
+    page: int = 1,
+    page_size: int = 50,
+    search: str = "",
+    current_user: UserResponse = Depends(get_current_active_user)
+):
+    """Get user management data (admin only)"""
+    try:
+        # Only allow admin users
+        if getattr(current_user, 'role', 'user') not in ["admin", "super_admin"]:
+            raise HTTPException(
+                status_code=403,
+                detail="Admin access required"
+            )
+        
+        # Validate pagination parameters
+        page = max(1, min(page, 1000))  # Limit to reasonable range
+        page_size = max(1, min(page_size, 100))  # Limit page size
+        
+        user_data = await get_user_management_data(page, page_size, search)
+        
+        return user_data
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Admin user management error: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to fetch user management data"
+        )
+
+@app.put("/api/admin/users/{user_id}/status")
+@limiter.limit("30/minute")
+async def update_admin_user_status(
+    request: Request,
+    user_id: str,
+    status_data: dict,
+    current_user: UserResponse = Depends(get_current_active_user)
+):
+    """Update user status (admin only)"""
+    try:
+        # Only allow admin users
+        if getattr(current_user, 'role', 'user') not in ["admin", "super_admin"]:
+            raise HTTPException(
+                status_code=403,
+                detail="Admin access required"
+            )
+        
+        # Validate input
+        if "is_active" not in status_data:
+            raise HTTPException(
+                status_code=400,
+                detail="Missing is_active field"
+            )
+        
+        is_active = bool(status_data["is_active"])
+        
+        result = await update_user_status(current_user.id, user_id, is_active)
+        
+        if result["success"]:
+            return {"message": result["message"], "user_id": user_id, "is_active": is_active}
+        else:
+            raise HTTPException(
+                status_code=400,
+                detail=result["error"]
+            )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Admin user status update error: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to update user status"
+        )
+
+@app.put("/api/admin/users/{user_id}/role")
+@limiter.limit("20/minute")
+async def update_admin_user_role(
+    request: Request,
+    user_id: str,
+    role_data: dict,
+    current_user: UserResponse = Depends(get_current_active_user)
+):
+    """Update user role (admin only)"""
+    try:
+        # Only allow super admin users for role changes
+        if getattr(current_user, 'role', 'user') != "super_admin":
+            raise HTTPException(
+                status_code=403,
+                detail="Super admin access required"
+            )
+        
+        # Validate input
+        if "role" not in role_data:
+            raise HTTPException(
+                status_code=400,
+                detail="Missing role field"
+            )
+        
+        new_role = str(role_data["role"])
+        
+        result = await update_user_role(current_user.id, user_id, new_role)
+        
+        if result["success"]:
+            return {"message": result["message"], "user_id": user_id, "new_role": new_role}
+        else:
+            raise HTTPException(
+                status_code=400,
+                detail=result["error"]
+            )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Admin user role update error: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to update user role"
+        )
+
+@app.get("/api/admin/threats")
+@limiter.limit("10/minute")
+async def get_admin_threat_management(
+    request: Request,
+    days: int = 7,
+    current_user: UserResponse = Depends(get_current_active_user)
+):
+    """Get threat management data (admin only)"""
+    try:
+        # Only allow admin users
+        if getattr(current_user, 'role', 'user') not in ["admin", "super_admin"]:
+            raise HTTPException(
+                status_code=403,
+                detail="Admin access required"
+            )
+        
+        # Validate days parameter
+        days = max(1, min(days, 90))  # Limit to reasonable range
+        
+        threat_data = await get_threat_management_data(days)
+        
+        return threat_data
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Admin threat management error: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to fetch threat management data"
+        )
+
+@app.get("/api/admin/system/monitoring")
+@limiter.limit("5/minute")
+async def get_admin_system_monitoring(
+    request: Request,
+    current_user: UserResponse = Depends(get_current_active_user)
+):
+    """Get system monitoring data (admin only)"""
+    try:
+        # Only allow admin users
+        if getattr(current_user, 'role', 'user') not in ["admin", "super_admin"]:
+            raise HTTPException(
+                status_code=403,
+                detail="Admin access required"
+            )
+        
+        monitoring_data = await get_system_monitoring_data()
+        
+        return monitoring_data
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Admin system monitoring error: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to fetch system monitoring data"
+        )
+
+@app.get("/api/admin/audit/log")
+@limiter.limit("10/minute")
+async def get_admin_audit_logs(
+    request: Request,
+    page: int = 1,
+    page_size: int = 50,
+    days: int = 30,
+    current_user: UserResponse = Depends(get_current_active_user)
+):
+    """Get admin audit logs (super admin only)"""
+    try:
+        # Only allow super admin users
+        if getattr(current_user, 'role', 'user') != "super_admin":
+            raise HTTPException(
+                status_code=403,
+                detail="Super admin access required"
+            )
+        
+        # Validate parameters
+        page = max(1, min(page, 1000))
+        page_size = max(1, min(page_size, 100))
+        days = max(1, min(days, 365))
+        
+        audit_log = await get_admin_audit_log(page, page_size, days)
+        
+        return audit_log
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Admin audit log error: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to fetch admin audit logs"
+        )
+
 # Helper functions
 def _is_shortened_url(url: str) -> bool:
     """Check if URL is a shortened URL"""
