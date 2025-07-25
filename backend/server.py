@@ -604,7 +604,7 @@ async def scan_link(
         log_security_event("LINK_SCAN_ERROR", {"error": str(e), "url": link_request.url[:100]}, client_ip)
         logger.error(f"Link scan error: {e}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=500,
             detail="Link scan failed"
         )
 
