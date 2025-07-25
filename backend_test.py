@@ -399,30 +399,41 @@ class BackendTester:
     def run_all_tests(self):
         """Run all backend tests"""
         print("=" * 60)
-        print("🚀 AMAN CYBERSECURITY PLATFORM - BACKEND API TESTS")
+        print("🚀 AMAN CYBERSECURITY PLATFORM - PHASE 7 BACKEND API TESTS")
         print("=" * 60)
         
-        tests = [
+        # Phase 7 specific tests
+        phase7_tests = [
             self.test_health_endpoint,
-            self.test_dashboard_stats,
-            self.test_recent_emails,
-            self.test_user_profile,
-            self.test_mongodb_connection
+            self.test_user_registration,
+            self.test_user_login,
+            self.test_token_refresh,
+            self.test_protected_user_profile,
+            self.test_protected_dashboard_stats,
+            self.test_protected_recent_emails,
+            self.test_advanced_email_scanning,
+            self.test_enhanced_link_scanning,
+            self.test_feedback_submission,
+            self.test_feedback_analytics,
+            self.test_domain_threat_intelligence,
+            self.test_url_threat_intelligence,
+            self.test_user_settings,
+            self.test_rate_limiting
         ]
         
         passed = 0
-        total = len(tests)
+        total = len(phase7_tests)
         
-        for test in tests:
+        for test in phase7_tests:
             if test():
                 passed += 1
             print()  # Add spacing between tests
         
         print("=" * 60)
-        print(f"📊 TEST SUMMARY: {passed}/{total} tests passed")
+        print(f"📊 PHASE 7 TEST SUMMARY: {passed}/{total} tests passed")
         
         if passed == total:
-            print("🎉 ALL TESTS PASSED! Backend is working correctly.")
+            print("🎉 ALL PHASE 7 TESTS PASSED! Advanced features are working correctly.")
             return True
         else:
             print(f"⚠️  {total - passed} test(s) failed. Check details above.")
