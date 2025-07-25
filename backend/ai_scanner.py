@@ -420,14 +420,14 @@ class AIEnhancedScanner:
             logger.error(f"AI scanner initialization failed: {e}")
             self.ai_available = False
     
-    async def scan_email_with_ai(self, email_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Enhanced email scanning with AI"""
+    async def scan_email_with_ai(self, email_data: Dict[str, Any], user_id: str) -> Dict[str, Any]:
+        """Enhanced email scanning with AI and cost management"""
         if not self.ai_available:
             return self._fallback_scan(email_data)
         
         try:
-            # Use AI analysis
-            ai_analysis = await self.ai_scanner.analyze_email_content(email_data)
+            # Use AI analysis with cost management
+            ai_analysis = await self.ai_scanner.analyze_email_content(email_data, user_id)
             
             # Convert to response format
             return {
