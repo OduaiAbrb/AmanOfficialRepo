@@ -25,6 +25,11 @@ from ai_scanner import scan_email_with_ai, scan_link_with_ai
 from feedback_system import submit_scan_feedback, get_user_feedback_analytics
 from threat_intelligence import check_domain_reputation, check_url_reputation
 from realtime_manager import realtime_manager, notify_threat_detected, notify_scan_completed
+from admin_manager import (
+    get_admin_dashboard_stats, get_user_management_data, 
+    update_user_status, update_user_role, get_threat_management_data,
+    get_system_monitoring_data, get_admin_audit_log
+)
 from models import (
     UserCreate, UserResponse, LoginRequest, Token, RefreshTokenRequest,
     EmailScanRequest, EmailScanResponse, DashboardStats, DashboardData,
