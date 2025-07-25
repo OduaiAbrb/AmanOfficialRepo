@@ -3,7 +3,7 @@
 ## Test Overview
 **Date**: July 24, 2025  
 **Tester**: Frontend Testing Agent  
-**Application URL**: https://4ec11e88-5adb-422f-8d39-cfb44f6f0f9a.preview.emergentagent.com  
+**Application URL**: https://30cbd4d9-b4c7-4721-ba22-5b885cf844b0.preview.emergentagent.com  
 **Test Duration**: Comprehensive testing across all major functionality  
 
 ## Test Results Summary: ✅ ALL TESTS PASSED

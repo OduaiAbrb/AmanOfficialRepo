@@ -1,41 +1,101 @@
 {
-  "timestamp": "2025-07-24T23:35:45.799234",
-  "backend_url": "https://4ec11e88-5adb-422f-8d39-cfb44f6f0f9a.preview.emergentagent.com/api",
+  "timestamp": "2025-07-25T13:14:05.335312",
+  "backend_url": "https://30cbd4d9-b4c7-4721-ba22-5b885cf844b0.preview.emergentagent.com/api",
   "results": [
     {
-      "test": "Health Check",
+      "test": "Enhanced Health Check",
       "success": true,
-      "details": "Status: healthy, Service: Aman Cybersecurity Platform",
-      "timestamp": "2025-07-24T23:35:45.628116"
+      "details": "Status: healthy, DB: healthy, API: healthy",
+      "timestamp": "2025-07-25T13:14:01.875094"
     },
     {
-      "test": "Dashboard Stats",
+      "test": "User Registration",
       "success": true,
-      "details": "Phishing: 12, Safe: 485, Potential: 7",
-      "timestamp": "2025-07-24T23:35:45.680500"
+      "details": "User registered: testuser_1753449241@cybersec.com",
+      "timestamp": "2025-07-25T13:14:02.189900"
     },
     {
-      "test": "Recent Emails",
+      "test": "User Login",
       "success": true,
-      "details": "Retrieved 5 emails with valid structure",
-      "timestamp": "2025-07-24T23:35:45.735165"
+      "details": "Login successful, token type: bearer",
+      "timestamp": "2025-07-25T13:14:02.476921"
     },
     {
-      "test": "User Profile",
+      "test": "Token Refresh",
       "success": true,
-      "details": "User: John Doe (john.doe@company.com) at TechCorp Inc.",
-      "timestamp": "2025-07-24T23:35:45.789453"
+      "details": "Token refresh successful",
+      "timestamp": "2025-07-25T13:14:02.824818"
     },
     {
-      "test": "MongoDB Connection",
+      "test": "Protected User Profile",
       "success": true,
-      "details": "Connection confirmed in backend logs",
-      "timestamp": "2025-07-24T23:35:45.799098"
+      "details": "User: Test User (testuser_1753449241@cybersec.com) - Role: user",
+      "timestamp": "2025-07-25T13:14:02.877927"
+    },
+    {
+      "test": "Protected Dashboard Stats",
+      "success": true,
+      "details": "Stats: Phishing=0, Safe=0, Potential=0, Accuracy=0.0%",
+      "timestamp": "2025-07-25T13:14:02.935350"
+    },
+    {
+      "test": "Protected Recent Emails",
+      "success": true,
+      "details": "Empty email list returned (valid for new user)",
+      "timestamp": "2025-07-25T13:14:02.991131"
+    },
+    {
+      "test": "Advanced Email Scanning",
+      "success": true,
+      "details": "Phishing detected: Risk=70.3, Status=phishing, Threats=3, Sources=4",
+      "timestamp": "2025-07-25T13:14:03.046539"
+    },
+    {
+      "test": "Enhanced Link Scanning",
+      "success": true,
+      "details": "Suspicious link detected: Risk=64.0, Status=potential_phishing, Categories=1",
+      "timestamp": "2025-07-25T13:14:03.106163"
+    },
+    {
+      "test": "Feedback Submission",
+      "success": false,
+      "details": "HTTP 400: {\"detail\":\"Failed to submit feedback\"}",
+      "timestamp": "2025-07-25T13:14:03.216281"
+    },
+    {
+      "test": "Feedback Analytics",
+      "success": true,
+      "details": "Analytics: Total=0, Accuracy=0%, Breakdown=0 types",
+      "timestamp": "2025-07-25T13:14:03.268887"
+    },
+    {
+      "test": "Domain Threat Intelligence",
+      "success": true,
+      "details": "Domain analysis: secure-bank-update.com -> Risk=45.0, Level=potential_phishing, Category=suspicious, Sources=1",
+      "timestamp": "2025-07-25T13:14:03.325873"
+    },
+    {
+      "test": "URL Threat Intelligence",
+      "success": true,
+      "details": "URL analysis: Risk=45.0, Level=potential_phishing, Category=suspicious, Sources=1",
+      "timestamp": "2025-07-25T13:14:03.381346"
+    },
+    {
+      "test": "User Settings",
+      "success": true,
+      "details": "Settings GET/PUT operations working correctly",
+      "timestamp": "2025-07-25T13:14:03.493761"
+    },
+    {
+      "test": "Rate Limiting",
+      "success": false,
+      "details": "Rate limiting not triggered - all requests succeeded",
+      "timestamp": "2025-07-25T13:14:05.332818"
     }
   ],
   "summary": {
-    "total_tests": 5,
-    "passed": 5,
-    "failed": 0
+    "total_tests": 15,
+    "passed": 13,
+    "failed": 2
   }
 }
