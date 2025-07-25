@@ -473,7 +473,7 @@ async def scan_link(
     link_request: LinkScanRequest,
     current_user: UserResponse = Depends(get_current_active_user)
 ):
-    """Scan individual link for threats"""
+    """Scan individual link for threats using advanced threat intelligence"""
     try:
         # Validate URL
         from security import InputValidator
@@ -483,27 +483,43 @@ async def scan_link(
                 detail="Invalid URL format"
             )
         
-        # Placeholder link analysis (will be enhanced with real threat intelligence)
-        risk_score = await _analyze_link(link_request.url)
+        # Use advanced link scanning logic
+        context = getattr(link_request, 'context', '')
+        scan_results = scan_link_advanced(link_request.url, context)
         
-        if risk_score >= 80:
+        risk_score = scan_results.get('risk_score', 0.0)
+        risk_level = scan_results.get('risk_level', 'safe')
+        
+        # Map risk_level to ScanStatus
+        if risk_level == "phishing":
             status = ScanStatus.PHISHING
-            explanation = "High risk malicious link detected"
-        elif risk_score >= 40:
+        elif risk_level == "potential_phishing":
             status = ScanStatus.POTENTIAL_PHISHING
-            explanation = "Potentially suspicious link"
         else:
             status = ScanStatus.SAFE
-            explanation = "Link appears safe"
+        
+        explanation = scan_results.get('explanation', 'No explanation available')
+        threat_indicators = scan_results.get('threat_indicators', [])
+        
+        # Extract threat categories from indicators
+        threat_categories = list(set(indicator.get('threat_type', '') for indicator in threat_indicators))
+        
+        # Check for shortened URL
+        is_shortened = _is_shortened_url(link_request.url)
+        
+        # For now, redirect_chain is empty (could be enhanced with actual URL following)
+        redirect_chain = []
+        
+        logger.info(f"Link scan completed for user {current_user.email}: url={link_request.url}, risk_score={risk_score}")
         
         return LinkScanResponse(
             url=link_request.url,
             status=status,
             risk_score=risk_score,
             explanation=explanation,
-            threat_categories=[],
-            redirect_chain=[],
-            is_shortened=_is_shortened_url(link_request.url)
+            threat_categories=threat_categories,
+            redirect_chain=redirect_chain,
+            is_shortened=is_shortened
         )
         
     except HTTPException:
