@@ -1,96 +1,96 @@
 {
-  "timestamp": "2025-07-25T13:11:07.537226",
+  "timestamp": "2025-07-25T13:12:42.445034",
   "backend_url": "https://30cbd4d9-b4c7-4721-ba22-5b885cf844b0.preview.emergentagent.com/api",
   "results": [
     {
       "test": "Enhanced Health Check",
       "success": true,
       "details": "Status: healthy, DB: healthy, API: healthy",
-      "timestamp": "2025-07-25T13:11:03.926667"
+      "timestamp": "2025-07-25T13:12:38.997564"
     },
     {
       "test": "User Registration",
       "success": true,
-      "details": "User registered: testuser_1753449063@cybersec.com",
-      "timestamp": "2025-07-25T13:11:04.260094"
+      "details": "User registered: testuser_1753449158@cybersec.com",
+      "timestamp": "2025-07-25T13:12:39.308276"
     },
     {
       "test": "User Login",
       "success": true,
       "details": "Login successful, token type: bearer",
-      "timestamp": "2025-07-25T13:11:04.562769"
+      "timestamp": "2025-07-25T13:12:39.597791"
     },
     {
       "test": "Token Refresh",
       "success": true,
       "details": "Token refresh successful",
-      "timestamp": "2025-07-25T13:11:04.897574"
+      "timestamp": "2025-07-25T13:12:39.938734"
     },
     {
       "test": "Protected User Profile",
       "success": true,
-      "details": "User: Test User (testuser_1753449063@cybersec.com) - Role: user",
-      "timestamp": "2025-07-25T13:11:04.954983"
+      "details": "User: Test User (testuser_1753449158@cybersec.com) - Role: user",
+      "timestamp": "2025-07-25T13:12:39.990284"
     },
     {
       "test": "Protected Dashboard Stats",
       "success": true,
       "details": "Stats: Phishing=0, Safe=0, Potential=0, Accuracy=0.0%",
-      "timestamp": "2025-07-25T13:11:05.024216"
+      "timestamp": "2025-07-25T13:12:40.047897"
     },
     {
       "test": "Protected Recent Emails",
       "success": true,
       "details": "Empty email list returned (valid for new user)",
-      "timestamp": "2025-07-25T13:11:05.082231"
+      "timestamp": "2025-07-25T13:12:40.104166"
     },
     {
       "test": "Advanced Email Scanning",
       "success": false,
-      "details": "HTTP 500: {\"error\":\"Internal server error\",\"detail\":\"An unexpected error occurred\"}",
-      "timestamp": "2025-07-25T13:11:05.168686"
+      "details": "HTTP 500: {\"detail\":\"Email scan failed\"}",
+      "timestamp": "2025-07-25T13:12:40.163987"
     },
     {
       "test": "Enhanced Link Scanning",
       "success": true,
       "details": "Suspicious link detected: Risk=64.0, Status=potential_phishing, Categories=1",
-      "timestamp": "2025-07-25T13:11:05.234447"
+      "timestamp": "2025-07-25T13:12:40.222993"
     },
     {
       "test": "Feedback Submission",
       "success": false,
-      "details": "HTTP 422: {\"detail\":[{\"type\":\"missing\",\"loc\":[\"body\",\"is_correct\"],\"msg\":\"Field required\",\"input\":{\"scan_id\":\"5e83e1a6-9b03-4b93-ac23-0a0e22578aab\",\"is_accurate\":true,\"feedback_type\":\"correct_detection\",\"comments\":\"The scan result was accurate and helpful\"},\"url\":\"https://errors.pydantic.dev/2.5/v/missing\"}]}",
-      "timestamp": "2025-07-25T13:11:05.343440"
+      "details": "HTTP 422: {\"detail\":[{\"type\":\"missing\",\"loc\":[\"body\",\"is_correct\"],\"msg\":\"Field required\",\"input\":{\"scan_id\":\"0a068e5d-5bd0-4426-8a29-805d71cb0c3b\",\"is_accurate\":true,\"feedback_type\":\"correct_detection\",\"comments\":\"The scan result was accurate and helpful\"},\"url\":\"https://errors.pydantic.dev/2.5/v/missing\"}]}",
+      "timestamp": "2025-07-25T13:12:40.332238"
     },
     {
       "test": "Feedback Analytics",
       "success": true,
       "details": "Analytics: Total=0, Accuracy=0%, Breakdown=0 types",
-      "timestamp": "2025-07-25T13:11:05.410712"
+      "timestamp": "2025-07-25T13:12:40.385375"
     },
     {
       "test": "Domain Threat Intelligence",
       "success": true,
       "details": "Domain analysis: secure-bank-update.com -> Risk=45.0, Level=potential_phishing, Category=suspicious, Sources=1",
-      "timestamp": "2025-07-25T13:11:05.481973"
+      "timestamp": "2025-07-25T13:12:40.436610"
     },
     {
       "test": "URL Threat Intelligence",
       "success": true,
       "details": "URL analysis: Risk=45.0, Level=potential_phishing, Category=suspicious, Sources=1",
-      "timestamp": "2025-07-25T13:11:05.538005"
+      "timestamp": "2025-07-25T13:12:40.495436"
     },
     {
       "test": "User Settings",
       "success": true,
       "details": "Settings GET/PUT operations working correctly",
-      "timestamp": "2025-07-25T13:11:05.660111"
+      "timestamp": "2025-07-25T13:12:40.602052"
     },
     {
       "test": "Rate Limiting",
       "success": false,
       "details": "Rate limiting not triggered - all requests succeeded",
-      "timestamp": "2025-07-25T13:11:07.534497"
+      "timestamp": "2025-07-25T13:12:42.442533"
     }
   ],
   "summary": {
