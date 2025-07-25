@@ -110,21 +110,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Startup and shutdown events
-@app.on_event("startup")
-async def startup_event():
-    """Initialize database and other startup tasks"""
-    logger.info("Starting Aman Cybersecurity Platform...")
-    await connect_to_mongo()
-    await init_collections()
-    logger.info("✅ Startup completed successfully")
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Cleanup on shutdown"""
-    logger.info("Shutting down Aman Cybersecurity Platform...")
-    await close_mongo_connection()
-    logger.info("✅ Shutdown completed")
 
 # Health check endpoint
 @app.get("/api/health", response_model=HealthResponse)
