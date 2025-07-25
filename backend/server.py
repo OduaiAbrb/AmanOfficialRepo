@@ -914,6 +914,94 @@ async def websocket_stats(
             detail="Failed to fetch connection statistics"
         )
 
+# AI Usage Analytics endpoints
+@app.get("/api/ai/usage/analytics")
+@limiter.limit("10/minute")
+async def get_ai_usage_analytics(
+    request: Request,
+    days: int = 30,
+    current_user: UserResponse = Depends(get_current_active_user)
+):
+    """Get user's AI usage analytics"""
+    try:
+        from ai_cost_manager import usage_tracker
+        
+        analytics = await usage_tracker.get_user_usage_analytics(current_user.id, days)
+        
+        return {
+            "user_id": current_user.id,
+            "analytics": analytics,
+            "generated_at": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"AI usage analytics error: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to fetch AI usage analytics"
+        )
+
+@app.get("/api/ai/usage/limits")
+@limiter.limit("20/minute") 
+async def get_ai_usage_limits(
+    request: Request,
+    current_user: UserResponse = Depends(get_current_active_user)
+):
+    """Get user's current AI usage and limits"""
+    try:
+        from ai_cost_manager import check_ai_usage_limits
+        
+        # Default to free tier - can be enhanced with user tier lookup
+        user_tier = getattr(current_user, 'tier', 'free_tier')
+        within_limits, usage_info = await check_ai_usage_limits(current_user.id, user_tier)
+        
+        return {
+            "user_id": current_user.id,
+            "user_tier": user_tier,
+            **usage_info,
+            "checked_at": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"AI usage limits error: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to fetch AI usage limits"
+        )
+
+@app.get("/api/ai/cache/stats")
+@limiter.limit("5/minute")
+async def get_ai_cache_stats(
+    request: Request,
+    current_user: UserResponse = Depends(get_current_active_user)
+):
+    """Get AI cache performance statistics (admin only)"""
+    try:
+        # Only allow admin users to view cache stats
+        if current_user.role != "admin":
+            raise HTTPException(
+                status_code=403,
+                detail="Admin access required"
+            )
+        
+        from ai_cost_manager import cache_manager
+        
+        cache_stats = await cache_manager.get_cache_stats()
+        
+        return {
+            "cache_statistics": cache_stats,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"AI cache stats error: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to fetch AI cache statistics"
+        )
+
 # Helper functions
 def _is_shortened_url(url: str) -> bool:
     """Check if URL is a shortened URL"""
