@@ -28,6 +28,16 @@ function App() {
               } 
             />
             
+            {/* Admin Routes */}
+            <Route 
+              path="/admin/*" 
+              element={
+                <ProtectedRoute>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              } 
+            />
+            
             {/* Redirect unknown routes to landing page */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
