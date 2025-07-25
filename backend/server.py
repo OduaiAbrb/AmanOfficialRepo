@@ -3,7 +3,7 @@ Aman Cybersecurity Platform - Secure Backend API
 Comprehensive FastAPI backend with JWT authentication, security middleware, and real database operations
 """
 
-from fastapi import FastAPI, HTTPException, Depends, status, Request, BackgroundTasks
+from fastapi import FastAPI, HTTPException, Depends, Request, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from slowapi import Limiter
@@ -143,7 +143,7 @@ async def register_user(request: Request, user_data: UserCreate):
         # Rate limiting for registration
         if not auth_rate_limiter.check_rate_limit(f"register_{client_ip}", max_attempts=3):
             raise HTTPException(
-                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                status_code=429,
                 detail="Too many registration attempts. Please try again later."
             )
         
@@ -166,7 +166,7 @@ async def register_user(request: Request, user_data: UserCreate):
     except Exception as e:
         logger.error(f"User registration error: {e}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=500,
             detail="Registration failed"
         )
 
@@ -182,7 +182,7 @@ async def login_user(request: Request, login_data: LoginRequest):
         if not auth_rate_limiter.check_rate_limit(identifier, max_attempts=5):
             log_security_event("AUTH_RATE_LIMIT", {"email": login_data.email}, client_ip)
             raise HTTPException(
-                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                status_code=429,
                 detail="Too many login attempts. Please try again later."
             )
         
@@ -190,7 +190,7 @@ async def login_user(request: Request, login_data: LoginRequest):
         if auth_rate_limiter.is_temporarily_blocked(identifier):
             log_security_event("AUTH_BLOCKED", {"email": login_data.email}, client_ip)
             raise HTTPException(
-                status_code=status.HTTP_423_LOCKED,
+                status_code=423,
                 detail="Account temporarily locked due to failed attempts"
             )
         
@@ -201,7 +201,7 @@ async def login_user(request: Request, login_data: LoginRequest):
             auth_rate_limiter.record_failed_attempt(identifier)
             log_security_event("AUTH_FAILED", {"email": login_data.email}, client_ip)
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
+                status_code=401,
                 detail="Incorrect email or password"
             )
         
@@ -223,7 +223,7 @@ async def login_user(request: Request, login_data: LoginRequest):
     except Exception as e:
         logger.error(f"Login error: {e}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=500,
             detail="Login failed"
         )
 
@@ -237,7 +237,7 @@ async def refresh_token(request: Request, refresh_data: RefreshTokenRequest):
         
         if not token_data:
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
+                status_code=401,
                 detail="Invalid refresh token"
             )
         
@@ -245,7 +245,7 @@ async def refresh_token(request: Request, refresh_data: RefreshTokenRequest):
         user = await get_user_by_id(token_data.user_id)
         if not user or not user.is_active:
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
+                status_code=401,
                 detail="User not found or inactive"
             )
         
@@ -259,7 +259,7 @@ async def refresh_token(request: Request, refresh_data: RefreshTokenRequest):
     except Exception as e:
         logger.error(f"Token refresh error: {e}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=500,
             detail="Token refresh failed"
         )
 
@@ -299,7 +299,7 @@ async def update_user_profile(
         
         if not success:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=400,
                 detail="Failed to update profile"
             )
         
@@ -312,7 +312,7 @@ async def update_user_profile(
     except Exception as e:
         logger.error(f"Profile update error: {e}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=500,
             detail="Profile update failed"
         )
 
@@ -343,7 +343,7 @@ async def get_dashboard_stats(
     except Exception as e:
         logger.error(f"Dashboard stats error: {e}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=500,
             detail="Failed to fetch dashboard stats"
         )
 
@@ -390,7 +390,7 @@ async def get_recent_emails(
     except Exception as e:
         logger.error(f"Recent emails error: {e}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=500,
             detail="Failed to fetch recent emails"
         )
 
@@ -413,7 +413,7 @@ async def scan_email(
         email_body = validated_data.get("email_body", "")
         if len(email_body) > 50000:  # 50KB limit
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=400,
                 detail="Email content too large"
             )
         
@@ -522,7 +522,7 @@ async def scan_link(
         # Enhanced security: Validate URL format and length
         if not link_request.url or len(link_request.url) > 2000:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=400,
                 detail="Invalid or too long URL"
             )
         
@@ -530,7 +530,7 @@ async def scan_link(
         from security import InputValidator
         if not InputValidator.validate_url(link_request.url):
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=400,
                 detail="Invalid URL format"
             )
         
@@ -622,7 +622,7 @@ async def get_user_settings(
     except Exception as e:
         logger.error(f"Get settings error: {e}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=500,
             detail="Failed to fetch settings"
         )
 
@@ -642,7 +642,7 @@ async def update_user_settings(
         
         if not success:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=400,
                 detail="Failed to update settings"
             )
         
@@ -653,7 +653,7 @@ async def update_user_settings(
     except Exception as e:
         logger.error(f"Update settings error: {e}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=500,
             detail="Settings update failed"
         )
 
@@ -681,7 +681,7 @@ async def submit_feedback(
         
         if not feedback_result.get('success'):
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=400,
                 detail=feedback_result.get('error', 'Failed to submit feedback')
             )
         
@@ -697,7 +697,7 @@ async def submit_feedback(
     except Exception as e:
         logger.error(f"Feedback submission error: {e}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=500,
             detail="Failed to submit feedback"
         )
 
@@ -721,7 +721,7 @@ async def get_feedback_analytics(
     except Exception as e:
         logger.error(f"Feedback analytics error: {e}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=500,
             detail="Failed to fetch feedback analytics"
         )
 
@@ -739,7 +739,7 @@ async def check_domain_threat_intelligence(
         from security import InputValidator
         if not InputValidator.validate_domain(domain):
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=400,
                 detail="Invalid domain format"
             )
         
@@ -755,7 +755,7 @@ async def check_domain_threat_intelligence(
     except Exception as e:
         logger.error(f"Domain reputation check error: {e}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=500,
             detail="Failed to check domain reputation"
         )
 
@@ -772,7 +772,7 @@ async def check_url_threat_intelligence(
         from security import InputValidator
         if not InputValidator.validate_url(url):
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=400,
                 detail="Invalid URL format"
             )
         
@@ -788,7 +788,7 @@ async def check_url_threat_intelligence(
     except Exception as e:
         logger.error(f"URL reputation check error: {e}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=500,
             detail="Failed to check URL reputation"
         )
 
