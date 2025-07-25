@@ -37,6 +37,13 @@ class BackendTester:
             
         print(f"🔗 Testing backend at: {self.backend_url}")
         self.results = []
+        self.auth_token = None  # Store JWT token for authenticated requests
+        self.test_user_data = {
+            "name": "Test User",
+            "email": "testuser@cybersec.com",
+            "password": "SecurePass123!",
+            "organization": "Test Organization"
+        }
         
     def log_result(self, test_name, success, details):
         """Log test result"""
