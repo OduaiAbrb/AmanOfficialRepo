@@ -1,101 +1,101 @@
 {
-  "timestamp": "2025-07-25T13:10:15.921103",
+  "timestamp": "2025-07-25T13:11:07.537226",
   "backend_url": "https://30cbd4d9-b4c7-4721-ba22-5b885cf844b0.preview.emergentagent.com/api",
   "results": [
     {
       "test": "Enhanced Health Check",
-      "success": false,
-      "details": "HTTP 502: ",
-      "timestamp": "2025-07-25T13:10:13.505089"
+      "success": true,
+      "details": "Status: healthy, DB: healthy, API: healthy",
+      "timestamp": "2025-07-25T13:11:03.926667"
     },
     {
       "test": "User Registration",
-      "success": false,
-      "details": "HTTP 502: ",
-      "timestamp": "2025-07-25T13:10:13.555308"
+      "success": true,
+      "details": "User registered: testuser_1753449063@cybersec.com",
+      "timestamp": "2025-07-25T13:11:04.260094"
     },
     {
       "test": "User Login",
-      "success": false,
-      "details": "HTTP 502: ",
-      "timestamp": "2025-07-25T13:10:13.605862"
+      "success": true,
+      "details": "Login successful, token type: bearer",
+      "timestamp": "2025-07-25T13:11:04.562769"
     },
     {
       "test": "Token Refresh",
-      "success": false,
-      "details": "Could not login to get refresh token",
-      "timestamp": "2025-07-25T13:10:13.652608"
+      "success": true,
+      "details": "Token refresh successful",
+      "timestamp": "2025-07-25T13:11:04.897574"
     },
     {
       "test": "Protected User Profile",
-      "success": false,
-      "details": "HTTP 502: ",
-      "timestamp": "2025-07-25T13:10:13.702633"
+      "success": true,
+      "details": "User: Test User (testuser_1753449063@cybersec.com) - Role: user",
+      "timestamp": "2025-07-25T13:11:04.954983"
     },
     {
       "test": "Protected Dashboard Stats",
-      "success": false,
-      "details": "HTTP 502: ",
-      "timestamp": "2025-07-25T13:10:13.753357"
+      "success": true,
+      "details": "Stats: Phishing=0, Safe=0, Potential=0, Accuracy=0.0%",
+      "timestamp": "2025-07-25T13:11:05.024216"
     },
     {
       "test": "Protected Recent Emails",
-      "success": false,
-      "details": "HTTP 502: ",
-      "timestamp": "2025-07-25T13:10:13.800342"
+      "success": true,
+      "details": "Empty email list returned (valid for new user)",
+      "timestamp": "2025-07-25T13:11:05.082231"
     },
     {
       "test": "Advanced Email Scanning",
       "success": false,
-      "details": "HTTP 502: ",
-      "timestamp": "2025-07-25T13:10:13.846309"
+      "details": "HTTP 500: {\"error\":\"Internal server error\",\"detail\":\"An unexpected error occurred\"}",
+      "timestamp": "2025-07-25T13:11:05.168686"
     },
     {
       "test": "Enhanced Link Scanning",
-      "success": false,
-      "details": "HTTP 502: ",
-      "timestamp": "2025-07-25T13:10:13.898515"
+      "success": true,
+      "details": "Suspicious link detected: Risk=64.0, Status=potential_phishing, Categories=1",
+      "timestamp": "2025-07-25T13:11:05.234447"
     },
     {
       "test": "Feedback Submission",
       "success": false,
-      "details": "Could not perform initial scan for feedback test",
-      "timestamp": "2025-07-25T13:10:13.950537"
+      "details": "HTTP 422: {\"detail\":[{\"type\":\"missing\",\"loc\":[\"body\",\"is_correct\"],\"msg\":\"Field required\",\"input\":{\"scan_id\":\"5e83e1a6-9b03-4b93-ac23-0a0e22578aab\",\"is_accurate\":true,\"feedback_type\":\"correct_detection\",\"comments\":\"The scan result was accurate and helpful\"},\"url\":\"https://errors.pydantic.dev/2.5/v/missing\"}]}",
+      "timestamp": "2025-07-25T13:11:05.343440"
     },
     {
       "test": "Feedback Analytics",
-      "success": false,
-      "details": "HTTP 502: ",
-      "timestamp": "2025-07-25T13:10:13.998971"
+      "success": true,
+      "details": "Analytics: Total=0, Accuracy=0%, Breakdown=0 types",
+      "timestamp": "2025-07-25T13:11:05.410712"
     },
     {
       "test": "Domain Threat Intelligence",
-      "success": false,
-      "details": "HTTP 502: ",
-      "timestamp": "2025-07-25T13:10:14.043077"
+      "success": true,
+      "details": "Domain analysis: secure-bank-update.com -> Risk=45.0, Level=potential_phishing, Category=suspicious, Sources=1",
+      "timestamp": "2025-07-25T13:11:05.481973"
     },
     {
       "test": "URL Threat Intelligence",
-      "success": false,
-      "details": "HTTP 502: ",
-      "timestamp": "2025-07-25T13:10:14.092025"
+      "success": true,
+      "details": "URL analysis: Risk=45.0, Level=potential_phishing, Category=suspicious, Sources=1",
+      "timestamp": "2025-07-25T13:11:05.538005"
     },
     {
       "test": "User Settings",
-      "success": false,
-      "details": "GET failed: HTTP 502",
-      "timestamp": "2025-07-25T13:10:14.141311"
+      "success": true,
+      "details": "Settings GET/PUT operations working correctly",
+      "timestamp": "2025-07-25T13:11:05.660111"
     },
     {
       "test": "Rate Limiting",
       "success": false,
       "details": "Rate limiting not triggered - all requests succeeded",
-      "timestamp": "2025-07-25T13:10:15.918637"
+      "timestamp": "2025-07-25T13:11:07.534497"
     }
   ],
   "summary": {
     "total_tests": 15,
-    "passed": 0,
-    "failed": 15
+    "passed": 12,
+    "failed": 3
   }
 }
