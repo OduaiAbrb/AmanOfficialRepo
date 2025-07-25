@@ -597,9 +597,9 @@ async def submit_feedback(
         feedback_result = await submit_scan_feedback(
             scan_id=validated_data.get('scan_id'),
             user_id=current_user.id,
-            is_correct=validated_data.get('is_accurate'),  # Map is_accurate to is_correct
+            is_correct=validated_data.get('is_correct'),
             suggested_risk_level=validated_data.get('suggested_risk_level'),
-            user_comment=validated_data.get('comments', '')
+            user_comment=validated_data.get('user_comment', '')
         )
         
         if not feedback_result.get('success'):
