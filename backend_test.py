@@ -88,8 +88,182 @@ class BackendTester:
         except requests.exceptions.RequestException as e:
             self.log_result("Enhanced Health Check", False, f"Request failed: {str(e)}")
             return False
-    
-    def test_dashboard_stats(self):
+    def test_rate_limiting(self):
+        """Test rate limiting functionality"""
+        try:
+            # Make multiple rapid requests to health endpoint (limit: 10/minute)
+            rapid_requests = []
+            for i in range(12):  # Exceed the limit
+                response = requests.get(f"{self.backend_url}/health", timeout=5)
+                rapid_requests.append(response.status_code)
+                time.sleep(0.1)  # Small delay between requests
+            
+            # Check if any requests were rate limited (429 status)
+            rate_limited = any(status == 429 for status in rapid_requests)
+            
+            if rate_limited:
+                self.log_result("Rate Limiting", True, "Rate limiting is working - received 429 responses")
+                return True
+            else:
+                self.log_result("Rate Limiting", False, "Rate limiting not triggered - all requests succeeded")
+                return False
+                
+        except requests.exceptions.RequestException as e:
+            self.log_result("Rate Limiting", False, f"Request failed: {str(e)}")
+            return False
+
+    def test_user_registration(self):
+        """Test POST /api/auth/register endpoint"""
+        try:
+            # Use unique email to avoid conflicts
+            test_email = f"testuser_{int(time.time())}@cybersec.com"
+            registration_data = {
+                "name": self.test_user_data["name"],
+                "email": test_email,
+                "password": self.test_user_data["password"],
+                "organization": self.test_user_data["organization"]
+            }
+            
+            response = requests.post(
+                f"{self.backend_url}/auth/register",
+                json=registration_data,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if 'message' in data and 'data' in data:
+                    # Update test user email for login test
+                    self.test_user_data["email"] = test_email
+                    self.log_result("User Registration", True, f"User registered: {test_email}")
+                    return True
+                else:
+                    self.log_result("User Registration", False, f"Invalid response format: {data}")
+                    return False
+            else:
+                self.log_result("User Registration", False, f"HTTP {response.status_code}: {response.text}")
+                return False
+                
+        except requests.exceptions.RequestException as e:
+            self.log_result("User Registration", False, f"Request failed: {str(e)}")
+            return False
+
+    def test_user_login(self):
+        """Test POST /api/auth/login endpoint"""
+        try:
+            login_data = {
+                "email": self.test_user_data["email"],
+                "password": self.test_user_data["password"]
+            }
+            
+            response = requests.post(
+                f"{self.backend_url}/auth/login",
+                json=login_data,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                required_fields = ['access_token', 'refresh_token', 'token_type']
+                
+                if all(field in data for field in required_fields):
+                    # Store token for authenticated requests
+                    self.auth_token = data['access_token']
+                    self.log_result("User Login", True, f"Login successful, token type: {data['token_type']}")
+                    return True
+                else:
+                    self.log_result("User Login", False, f"Missing token fields: {required_fields}")
+                    return False
+            else:
+                self.log_result("User Login", False, f"HTTP {response.status_code}: {response.text}")
+                return False
+                
+        except requests.exceptions.RequestException as e:
+            self.log_result("User Login", False, f"Request failed: {str(e)}")
+            return False
+
+    def test_token_refresh(self):
+        """Test POST /api/auth/refresh endpoint"""
+        try:
+            # First login to get refresh token
+            login_data = {
+                "email": self.test_user_data["email"],
+                "password": self.test_user_data["password"]
+            }
+            
+            login_response = requests.post(
+                f"{self.backend_url}/auth/login",
+                json=login_data,
+                timeout=10
+            )
+            
+            if login_response.status_code != 200:
+                self.log_result("Token Refresh", False, "Could not login to get refresh token")
+                return False
+            
+            refresh_token = login_response.json().get('refresh_token')
+            if not refresh_token:
+                self.log_result("Token Refresh", False, "No refresh token in login response")
+                return False
+            
+            # Test refresh endpoint
+            refresh_data = {"refresh_token": refresh_token}
+            response = requests.post(
+                f"{self.backend_url}/auth/refresh",
+                json=refresh_data,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if 'access_token' in data and 'refresh_token' in data:
+                    self.log_result("Token Refresh", True, "Token refresh successful")
+                    return True
+                else:
+                    self.log_result("Token Refresh", False, "Missing tokens in refresh response")
+                    return False
+            else:
+                self.log_result("Token Refresh", False, f"HTTP {response.status_code}: {response.text}")
+                return False
+                
+        except requests.exceptions.RequestException as e:
+            self.log_result("Token Refresh", False, f"Request failed: {str(e)}")
+            return False
+
+    def get_auth_headers(self):
+        """Get authorization headers for authenticated requests"""
+        if self.auth_token:
+            return {"Authorization": f"Bearer {self.auth_token}"}
+        return {}
+
+    def test_protected_user_profile(self):
+        """Test GET /api/user/profile endpoint (protected)"""
+        try:
+            headers = self.get_auth_headers()
+            response = requests.get(f"{self.backend_url}/user/profile", headers=headers, timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                required_fields = ['id', 'name', 'email', 'organization', 'is_active', 'role']
+                
+                if all(field in data for field in required_fields):
+                    self.log_result("Protected User Profile", True, 
+                                  f"User: {data['name']} ({data['email']}) - Role: {data['role']}")
+                    return True
+                else:
+                    missing_fields = [f for f in required_fields if f not in data]
+                    self.log_result("Protected User Profile", False, f"Missing fields: {missing_fields}")
+                    return False
+            elif response.status_code == 401:
+                self.log_result("Protected User Profile", False, "Authentication required (401) - token may be invalid")
+                return False
+            else:
+                self.log_result("Protected User Profile", False, f"HTTP {response.status_code}: {response.text}")
+                return False
+                
+        except requests.exceptions.RequestException as e:
+            self.log_result("Protected User Profile", False, f"Request failed: {str(e)}")
+            return False
         """Test GET /api/dashboard/stats endpoint"""
         try:
             response = requests.get(f"{self.backend_url}/dashboard/stats", timeout=10)
