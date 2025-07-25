@@ -142,8 +142,13 @@ const Dashboard = () => {
   ];
 
   const handleNavigation = (item) => {
-    setCurrentPage(item.id);
-    navigate(item.path);
+    if (item.isAdmin) {
+      // Navigate to admin panel
+      window.location.href = item.path;
+    } else {
+      setCurrentPage(item.id);
+      navigate(item.path);
+    }
   };
 
   const getStatusColor = (status) => {
