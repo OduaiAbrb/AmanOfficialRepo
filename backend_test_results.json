@@ -1,0 +1,139 @@
+{
+
+  "timestamp": "2025-07-25T16:26:49.370071",
+  "backend_url": "https://859201a4-6ec0-482a-aafb-51101591fb03.preview.emergentagent.com/api",
+
+  "results": [
+    {
+      "test": "Enhanced Health Check",
+      "success": true,
+      "details": "Status: healthy, DB: healthy, API: healthy",
+      "timestamp": "2025-07-26T09:34:32.040318"
+    },
+    {
+      "test": "Database Connectivity and Collections",
+      "success": true,
+      "details": "Database healthy, using aman_cybersecurity database with proper collections",
+      "timestamp": "2025-07-26T09:34:32.043829"
+    },
+    {
+      "test": "User Registration",
+      "success": true,
+      "details": "User registered: testuser_1753522472@cybersec.com",
+      "timestamp": "2025-07-26T09:34:32.308657"
+    },
+    {
+      "test": "User Login",
+      "success": true,
+      "details": "Login successful, token type: bearer",
+      "timestamp": "2025-07-26T09:34:32.550781"
+    },
+    {
+      "test": "Token Refresh",
+      "success": true,
+      "details": "Token refresh successful",
+      "timestamp": "2025-07-26T09:34:32.791520"
+    },
+    {
+      "test": "Protected User Profile",
+      "success": true,
+      "details": "User: Test User (testuser_1753522472@cybersec.com) - Role: user",
+      "timestamp": "2025-07-26T09:34:32.796319"
+    },
+    {
+      "test": "Protected Dashboard Stats",
+      "success": true,
+      "details": "Stats: Phishing=0, Safe=0, Potential=0, Accuracy=0.0%",
+      "timestamp": "2025-07-26T09:34:32.802234"
+    },
+    {
+      "test": "Protected Recent Emails",
+      "success": true,
+      "details": "Empty email list returned (valid for new user)",
+      "timestamp": "2025-07-26T09:34:32.807333"
+    },
+    {
+      "test": "Real Database Operations No Mock Data",
+      "success": true,
+      "details": "Real database data confirmed - Total scans: 0, Emails: 0",
+      "timestamp": "2025-07-26T09:34:32.816828"
+    },
+    {
+      "test": "AI Integration Gemini Functionality",
+      "success": true,
+      "details": "AI-powered scanning working - Email risk: 95.0, Link risk: 90.0",
+      "timestamp": "2025-07-26T09:34:35.667958"
+    },
+    {
+      "test": "Advanced Email Scanning",
+      "success": true,
+      "details": "Phishing detected: Risk=95.0, Status=phishing, Threats=4, Sources=1",
+      "timestamp": "2025-07-26T09:34:35.682651"
+    },
+    {
+      "test": "Enhanced Link Scanning",
+      "success": true,
+      "details": "Suspicious link detected: Risk=90.0, Status=phishing, Categories=4",
+      "timestamp": "2025-07-26T09:34:39.906487"
+    },
+    {
+      "test": "AI Cost Management Analytics Endpoints",
+      "success": true,
+      "details": "Analytics working, Limits working, Cache access control fixed: Correctly denied access (403) for non-admin user",
+      "timestamp": "2025-07-26T09:34:39.922473"
+    },
+    {
+      "test": "Admin Panel Comprehensive",
+      "success": true,
+      "details": "All 5 admin endpoints properly deny regular user access (403)",
+      "timestamp": "2025-07-26T09:34:39.940998"
+    },
+    {
+      "test": "WebSocket Connection Capability",
+      "success": true,
+      "details": "WebSocket stats endpoint properly protected (403 for non-admin)",
+      "timestamp": "2025-07-26T09:34:39.944655"
+    },
+    {
+      "test": "Security Features Comprehensive",
+      "success": true,
+      "details": "Rate limiting, input validation, and JWT protection all working",
+      "timestamp": "2025-07-26T09:34:41.203673"
+    },
+    {
+      "test": "User Settings",
+      "success": true,
+      "details": "Settings GET/PUT operations working correctly",
+      "timestamp": "2025-07-26T09:34:41.215185"
+    },
+    {
+      "test": "Feedback Submission",
+      "success": true,
+      "details": "Feedback submitted successfully: 9164344d-9217-4475-b4dd-e2db8e4582f5",
+      "timestamp": "2025-07-26T09:34:41.238857"
+    },
+    {
+      "test": "Feedback Analytics",
+      "success": true,
+      "details": "Analytics: Total=1, Accuracy=100.0%, Breakdown=1 types",
+      "timestamp": "2025-07-26T09:34:41.243711"
+    },
+    {
+      "test": "Domain Threat Intelligence",
+      "success": true,
+      "details": "Domain analysis: secure-bank-update.com -> Risk=45.0, Level=potential_phishing, Category=suspicious, Sources=1",
+      "timestamp": "2025-07-26T09:34:41.249574"
+    },
+    {
+      "test": "URL Threat Intelligence",
+      "success": true,
+      "details": "URL analysis: Risk=45.0, Level=potential_phishing, Category=suspicious, Sources=1",
+      "timestamp": "2025-07-26T09:34:41.255028"
+    }
+  ],
+  "summary": {
+    "total_tests": 21,
+    "passed": 21,
+    "failed": 0
+  }
+}

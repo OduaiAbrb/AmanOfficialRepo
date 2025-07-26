@@ -1,0 +1,85 @@
+{
+  "timestamp": "2025-07-25T01:04:50.758480",
+  "backend_url": "https://859201a4-6ec0-482a-aafb-51101591fb03.preview.emergentagent.com/api",
+
+  "phase": "Phase 6 - Secure Backend API Development",
+  "results": [
+    {
+      "test": "Enhanced Health Check",
+      "success": true,
+      "details": "Status: healthy, DB: healthy, API: healthy",
+      "timestamp": "2025-07-25T01:04:41.762941"
+    },
+    {
+      "test": "Rate Limiting",
+      "success": false,
+      "details": "Rate limiting not triggered - all requests succeeded",
+      "timestamp": "2025-07-25T01:04:44.133351"
+    },
+    {
+      "test": "User Registration",
+      "success": true,
+      "details": "User registered: sectest_1753405481@cybersec.com",
+      "timestamp": "2025-07-25T01:04:44.949011"
+    },
+    {
+      "test": "User Login",
+      "success": true,
+      "details": "Login successful, token type: bearer",
+      "timestamp": "2025-07-25T01:04:45.735999"
+    },
+    {
+      "test": "Token Refresh",
+      "success": true,
+      "details": "Token refresh successful",
+      "timestamp": "2025-07-25T01:04:46.289543"
+    },
+    {
+      "test": "Authentication Required",
+      "success": false,
+      "details": "Expected 401, got 403",
+      "timestamp": "2025-07-25T01:04:46.866012"
+    },
+    {
+      "test": "Protected User Profile",
+      "success": true,
+      "details": "User: Security Test User (sectest_1753405481@cybersec.com) - Role: user",
+      "timestamp": "2025-07-25T01:04:47.421104"
+    },
+    {
+      "test": "Protected Dashboard Stats",
+      "success": true,
+      "details": "Stats - Phishing: 0, Safe: 0, Accuracy: 0.0%",
+      "timestamp": "2025-07-25T01:04:47.974694"
+    },
+    {
+      "test": "Protected Recent Emails",
+      "success": true,
+      "details": "Empty email list returned (valid)",
+      "timestamp": "2025-07-25T01:04:48.529986"
+    },
+    {
+      "test": "Email Scanning",
+      "success": true,
+      "details": "Scan result: potential_phishing (risk: 45.0)",
+      "timestamp": "2025-07-25T01:04:49.087419"
+    },
+    {
+      "test": "Link Scanning",
+      "success": true,
+      "details": "Link scan: potential_phishing (risk: 70.0, shortened: True)",
+      "timestamp": "2025-07-25T01:04:49.648941"
+    },
+    {
+      "test": "User Settings",
+      "success": true,
+      "details": "GET and PUT settings both working",
+      "timestamp": "2025-07-25T01:04:50.255126"
+    }
+  ],
+  "summary": {
+    "total_tests": 12,
+    "passed": 10,
+    "failed": 2
+  }
+}
