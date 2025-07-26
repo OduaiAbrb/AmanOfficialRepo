@@ -248,7 +248,7 @@ Provide detailed threat analysis in JSON format."""
             
             return self._create_fallback_analysis(email_data, str(e))
     
-    async def analyze_link(self, url: str, context: str = "") -> AIThreatAnalysis:
+    async def analyze_link(self, url: str, context: str = "", user_id: str = "anonymous") -> AIThreatAnalysis:
         """Analyze link using AI threat intelligence"""
         try:
             # Sanitize inputs
@@ -289,10 +289,10 @@ Provide threat analysis in JSON format."""
             link_data = {"url": url, "context": context}
             analysis_result = self._parse_ai_response(ai_response, link_data)
             
-            # Store analysis
-            await self._store_ai_analysis(analysis_result, link_data)
+            # Store analysis with user_id
+            await self._store_ai_analysis(analysis_result, link_data, user_id)
             
-            logger.info(f"AI link analysis completed: risk_score={analysis_result.risk_score}")
+            logger.info(f"AI link analysis completed for user {user_id}: risk_score={analysis_result.risk_score}")
             
             return analysis_result
             
@@ -461,14 +461,14 @@ class AIEnhancedScanner:
             logger.error(f"AI email scanning failed: {e}")
             return self._fallback_scan(email_data)
     
-    async def scan_link_with_ai(self, url: str, context: str = "") -> Dict[str, Any]:
+    async def scan_link_with_ai(self, url: str, context: str = "", user_id: str = "anonymous") -> Dict[str, Any]:
         """Enhanced link scanning with AI"""
         if not self.ai_available:
             return self._fallback_link_scan(url)
         
         try:
             # Use AI analysis
-            ai_analysis = await self.ai_scanner.analyze_link(url, context)
+            ai_analysis = await self.ai_scanner.analyze_link(url, context, user_id)
             
             # Convert to response format
             return {
@@ -529,15 +529,16 @@ async def scan_email_with_ai(email_data: Dict[str, Any], user_id: str = None) ->
     """
     return await ai_enhanced_scanner.scan_email_with_ai(email_data, user_id or "anonymous")
 
-async def scan_link_with_ai(url: str, context: str = "") -> Dict[str, Any]:
+async def scan_link_with_ai(url: str, context: str = "", user_id: str = "anonymous") -> Dict[str, Any]:
     """
     AI-enhanced link scanning function for API integration
     
     Args:
         url: URL to analyze
         context: Optional context
+        user_id: User ID for cost tracking
         
     Returns:
         Enhanced link analysis with AI
     """
-    return await ai_enhanced_scanner.scan_link_with_ai(url, context)
+    return await ai_enhanced_scanner.scan_link_with_ai(url, context, user_id)

@@ -22,7 +22,8 @@ from typing import Dict, List, Any, Optional
 import uuid
 
 # Configuration
-BACKEND_URL = "https://a7ef5366-e6cc-4ff4-9acc-af148819b2aa.preview.emergentagent.com"
+
+BACKEND_URL = "https://efa74ed7-f978-4210-bbcd-d316719ab043.preview.emergentagent.com"
 API_BASE = f"{BACKEND_URL}/api"
 
 class AITestUser:

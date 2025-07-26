@@ -663,10 +663,17 @@ async def scan_link(
             "url_length": len(link_request.url)
         }, client_ip)
         
-        # Use AI-enhanced scanning with fallback
-        context = getattr(link_request, 'context', '')
-        scan_results = await safe_scan_link_with_ai(link_request.url, context)
-        logger.info(f"AI link scan completed for user {current_user.email}")
+
+
+        # Use AI-enhanced link scanning with fallback
+        try:
+            context = getattr(link_request, 'context', '')
+            scan_results = await scan_link_with_ai(link_request.url, context, current_user.id)
+            logger.info(f"AI link scan successful for user {current_user.email}")
+        except Exception as ai_error:
+            logger.warning(f"AI link scanning failed, falling back to advanced scanning: {ai_error}")
+            context = getattr(link_request, 'context', '')
+            scan_results = scan_link_advanced(link_request.url, context)
         
         risk_score = scan_results.get('risk_score', 0.0)
         risk_level = scan_results.get('risk_level', 'safe')
@@ -981,7 +988,7 @@ async def websocket_stats(
     """Get WebSocket connection statistics"""
     try:
         # Only allow admin users to view connection stats
-        if current_user.role != "admin":
+        if getattr(current_user, 'role', 'user') != "admin":
             raise HTTPException(
                 status_code=403,
                 detail="Admin access required"
