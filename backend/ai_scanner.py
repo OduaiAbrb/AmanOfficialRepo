@@ -248,7 +248,7 @@ Provide detailed threat analysis in JSON format."""
             
             return self._create_fallback_analysis(email_data, str(e))
     
-    async def analyze_link(self, url: str, context: str = "") -> AIThreatAnalysis:
+    async def analyze_link(self, url: str, context: str = "", user_id: str = "anonymous") -> AIThreatAnalysis:
         """Analyze link using AI threat intelligence"""
         try:
             # Sanitize inputs
@@ -289,10 +289,10 @@ Provide threat analysis in JSON format."""
             link_data = {"url": url, "context": context}
             analysis_result = self._parse_ai_response(ai_response, link_data)
             
-            # Store analysis
-            await self._store_ai_analysis(analysis_result, link_data)
+            # Store analysis with user_id
+            await self._store_ai_analysis(analysis_result, link_data, user_id)
             
-            logger.info(f"AI link analysis completed: risk_score={analysis_result.risk_score}")
+            logger.info(f"AI link analysis completed for user {user_id}: risk_score={analysis_result.risk_score}")
             
             return analysis_result
             
