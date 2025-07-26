@@ -524,12 +524,8 @@ async def scan_email(
         }, client_ip)
         
         # Use AI-enhanced scanning with fallback
-        try:
-            scan_results = await scan_email_with_ai(validated_data, current_user.id)
-            logger.info(f"AI email scan successful for user {current_user.email}")
-        except Exception as ai_error:
-            logger.warning(f"AI scanning failed, falling back to advanced scanning: {ai_error}")
-            scan_results = scan_email_advanced(validated_data)
+        scan_results = await safe_scan_email_with_ai(validated_data, current_user.id)
+        logger.info(f"AI email scan completed for user {current_user.email}")
         
         risk_score = scan_results.get('risk_score', 0.0)
         risk_level = scan_results.get('risk_level', 'safe')
