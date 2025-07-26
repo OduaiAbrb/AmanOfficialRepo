@@ -19,6 +19,7 @@ import asyncio
 import json
 from contextlib import asynccontextmanager
 
+
 # Import modules with graceful fallbacks
 try:
     from email_scanner import scan_email_advanced, scan_link_advanced
