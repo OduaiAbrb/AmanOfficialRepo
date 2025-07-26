@@ -51,52 +51,60 @@ def get_database():
 # Collections and indexes initialization
 async def init_collections():
     """Initialize database collections with proper indexes"""
-    db = get_database()
-    
-    # Users collection
-    await db.users.create_index("email", unique=True)
-    await db.users.create_index("organization")
-    await db.users.create_index("is_active")
-    await db.users.create_index("created_at")
-    
-    # Email scans collection
-    await db.email_scans.create_index("user_id")
-    await db.email_scans.create_index("scanned_at")
-    await db.email_scans.create_index("scan_result")
-    await db.email_scans.create_index([("user_id", 1), ("scanned_at", -1)])
-    await db.email_scans.create_index("sender")
-    
-    # Threat logs collection
-    await db.threat_logs.create_index("domain")
-    await db.threat_logs.create_index("detected_at")
-    await db.threat_logs.create_index("is_active")
-    await db.threat_logs.create_index("severity")
-    
-    # Organizations collection
-    await db.organizations.create_index("name", unique=True)
-    await db.organizations.create_index("domain")
-    await db.organizations.create_index("status")
-    
-    # Unblock requests collection
-    await db.unblock_requests.create_index("user_id")
-    await db.unblock_requests.create_index("status")
-    await db.unblock_requests.create_index("created_at")
-    
-    # Feedback collection
-    await db.feedback.create_index("user_id")
-    await db.feedback.create_index("scan_id")
-    await db.feedback.create_index("created_at")
-    
-    # Settings collection
-    await db.user_settings.create_index("user_id", unique=True)
-    await db.organization_settings.create_index("organization_id", unique=True)
-    
-    # Threat intelligence collection
-    await db.threat_domains.create_index("domain", unique=True)
-    await db.threat_domains.create_index("last_seen")
-    await db.threat_domains.create_index("risk_score")
-    
-    print("✅ Database collections initialized")
+    try:
+        db = get_database()
+        if not db:
+            print("⚠️ Database not available, skipping collection initialization")
+            return
+        
+        # Users collection
+        await db.users.create_index("email", unique=True)
+        await db.users.create_index("organization")
+        await db.users.create_index("is_active")
+        await db.users.create_index("created_at")
+        
+        # Email scans collection
+        await db.email_scans.create_index("user_id")
+        await db.email_scans.create_index("scanned_at")
+        await db.email_scans.create_index("scan_result")
+        await db.email_scans.create_index([("user_id", 1), ("scanned_at", -1)])
+        await db.email_scans.create_index("sender")
+        
+        # Threat logs collection
+        await db.threat_logs.create_index("domain")
+        await db.threat_logs.create_index("detected_at")
+        await db.threat_logs.create_index("is_active")
+        await db.threat_logs.create_index("severity")
+        
+        # Organizations collection
+        await db.organizations.create_index("name", unique=True)
+        await db.organizations.create_index("domain")
+        await db.organizations.create_index("status")
+        
+        # Unblock requests collection
+        await db.unblock_requests.create_index("user_id")
+        await db.unblock_requests.create_index("status")
+        await db.unblock_requests.create_index("created_at")
+        
+        # Feedback collection
+        await db.feedback.create_index("user_id")
+        await db.feedback.create_index("scan_id")
+        await db.feedback.create_index("created_at")
+        
+        # Settings collection
+        await db.user_settings.create_index("user_id", unique=True)
+        await db.organization_settings.create_index("organization_id", unique=True)
+        
+        # Threat intelligence collection
+        await db.threat_domains.create_index("domain", unique=True)
+        await db.threat_domains.create_index("last_seen")
+        await db.threat_domains.create_index("risk_score")
+        
+        print("✅ Database collections initialized")
+        
+    except Exception as e:
+        print(f"⚠️ Database collection initialization failed: {e}")
+        # Don't raise exception, allow graceful fallback
 
 # User database operations
 class UserDatabase:
