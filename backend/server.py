@@ -213,7 +213,7 @@ async def health_check(request: Request):
     try:
         # Check database connectivity
         db = get_database()
-        if db:
+        if db is not None:
             await db.command('ping')
             db_status = "healthy"
         else:
