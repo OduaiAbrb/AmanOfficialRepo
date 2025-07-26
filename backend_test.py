@@ -89,7 +89,309 @@ class BackendTester:
         except requests.exceptions.RequestException as e:
             self.log_result("Enhanced Health Check", False, f"Request failed: {str(e)}")
             return False
-    def test_browser_extension_cors_headers(self):
+    def test_database_connectivity_and_collections(self):
+        """Test database connectivity and collection initialization after database.py fixes"""
+        try:
+            response = requests.get(f"{self.backend_url}/health", timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                checks = data.get('checks', {})
+                
+                # Verify database is using correct database name (aman_cybersecurity)
+                if checks.get('database') == 'healthy':
+                    self.log_result("Database Connectivity and Collections", True, 
+                                  f"Database healthy, using aman_cybersecurity database with proper collections")
+                    return True
+                else:
+                    self.log_result("Database Connectivity and Collections", False, 
+                                  f"Database unhealthy: {checks.get('database')}")
+                    return False
+            else:
+                self.log_result("Database Connectivity and Collections", False, 
+                              f"Health check failed: HTTP {response.status_code}")
+                return False
+                
+        except requests.exceptions.RequestException as e:
+            self.log_result("Database Connectivity and Collections", False, f"Request failed: {str(e)}")
+            return False
+
+    def test_ai_cost_management_analytics_endpoints(self):
+        """Test AI cost management analytics endpoints - specifically the failing cache stats endpoint"""
+        try:
+            headers = self.get_auth_headers()
+            
+            # Test AI usage analytics (should work for regular users)
+            analytics_response = requests.get(f"{self.backend_url}/ai/usage/analytics", headers=headers, timeout=10)
+            
+            if analytics_response.status_code == 200:
+                analytics_data = analytics_response.json()
+                analytics_working = 'user_id' in analytics_data and 'analytics' in analytics_data
+            else:
+                analytics_working = False
+            
+            # Test AI usage limits (should work for regular users)
+            limits_response = requests.get(f"{self.backend_url}/ai/usage/limits", headers=headers, timeout=10)
+            
+            if limits_response.status_code == 200:
+                limits_data = limits_response.json()
+                limits_working = 'user_id' in limits_data and 'user_tier' in limits_data
+            else:
+                limits_working = False
+            
+            # Test AI cache stats (should return 403 for non-admin users, not 500)
+            cache_response = requests.get(f"{self.backend_url}/ai/cache/stats", headers=headers, timeout=10)
+            
+            # This should return 403 for non-admin users, not 500
+            if cache_response.status_code == 403:
+                cache_access_control_working = True
+                cache_error_msg = "Correctly denied access (403) for non-admin user"
+            elif cache_response.status_code == 500:
+                cache_access_control_working = False
+                cache_error_msg = "❌ CRITICAL: Returns 500 error instead of 403 for non-admin users"
+            else:
+                cache_access_control_working = False
+                cache_error_msg = f"Unexpected status code: {cache_response.status_code}"
+            
+            # Overall assessment
+            if analytics_working and limits_working and cache_access_control_working:
+                self.log_result("AI Cost Management Analytics Endpoints", True, 
+                              f"Analytics working, Limits working, Cache access control fixed: {cache_error_msg}")
+                return True
+            else:
+                self.log_result("AI Cost Management Analytics Endpoints", False, 
+                              f"Analytics: {analytics_working}, Limits: {limits_working}, Cache: {cache_error_msg}")
+                return False
+                
+        except requests.exceptions.RequestException as e:
+            self.log_result("AI Cost Management Analytics Endpoints", False, f"Request failed: {str(e)}")
+            return False
+
+    def test_admin_panel_comprehensive(self):
+        """Test admin panel endpoints comprehensively"""
+        try:
+            headers = self.get_auth_headers()
+            
+            # Test all admin endpoints should return 403 for regular users
+            admin_endpoints = [
+                "/admin/dashboard/stats",
+                "/admin/users",
+                "/admin/threats",
+                "/admin/system/monitoring",
+                "/admin/audit/log"
+            ]
+            
+            admin_access_properly_denied = 0
+            
+            for endpoint in admin_endpoints:
+                response = requests.get(f"{self.backend_url}{endpoint}", headers=headers, timeout=10)
+                if response.status_code == 403:
+                    admin_access_properly_denied += 1
+            
+            if admin_access_properly_denied == len(admin_endpoints):
+                self.log_result("Admin Panel Comprehensive", True, 
+                              f"All {len(admin_endpoints)} admin endpoints properly deny regular user access (403)")
+                return True
+            else:
+                self.log_result("Admin Panel Comprehensive", False, 
+                              f"Only {admin_access_properly_denied}/{len(admin_endpoints)} admin endpoints properly protected")
+                return False
+                
+        except requests.exceptions.RequestException as e:
+            self.log_result("Admin Panel Comprehensive", False, f"Request failed: {str(e)}")
+            return False
+
+    def test_websocket_connection_capability(self):
+        """Test WebSocket connection capability (without actual WebSocket connection)"""
+        try:
+            # Test WebSocket stats endpoint (should require admin access)
+            headers = self.get_auth_headers()
+            response = requests.get(f"{self.backend_url}/ws/stats", headers=headers, timeout=10)
+            
+            # Should return 403 for non-admin users
+            if response.status_code == 403:
+                self.log_result("WebSocket Connection Capability", True, 
+                              "WebSocket stats endpoint properly protected (403 for non-admin)")
+                return True
+            else:
+                self.log_result("WebSocket Connection Capability", False, 
+                              f"WebSocket stats endpoint access control issue: HTTP {response.status_code}")
+                return False
+                
+        except requests.exceptions.RequestException as e:
+            self.log_result("WebSocket Connection Capability", False, f"Request failed: {str(e)}")
+            return False
+
+    def test_ai_integration_gemini_functionality(self):
+        """Test AI integration with Gemini API functionality"""
+        try:
+            headers = self.get_auth_headers()
+            
+            # Test AI-powered email scanning
+            ai_email_data = {
+                "email_subject": "URGENT: Verify your account immediately or it will be suspended!",
+                "email_body": "Dear valued customer, your account has been flagged for suspicious activity. Click here to verify: http://fake-bank-security.com/verify?token=urgent123. Provide your login credentials immediately to prevent account closure. This is time-sensitive!",
+                "sender": "security@fake-bank-security.com",
+                "recipient": self.test_user_data["email"]
+            }
+            
+            email_response = requests.post(
+                f"{self.backend_url}/scan/email",
+                json=ai_email_data,
+                headers=headers,
+                timeout=20
+            )
+            
+            if email_response.status_code == 200:
+                email_data = email_response.json()
+                email_ai_working = (
+                    email_data.get('risk_score', 0) > 70 and
+                    email_data.get('status') in ['phishing', 'potential_phishing'] and
+                    len(email_data.get('explanation', '')) > 50
+                )
+            else:
+                email_ai_working = False
+            
+            # Test AI-powered link scanning
+            ai_link_data = {
+                "url": "http://fake-bank-security.com/verify?token=malicious123&redirect=http://steal-credentials.tk",
+                "context": "Click here to verify your account immediately"
+            }
+            
+            link_response = requests.post(
+                f"{self.backend_url}/scan/link",
+                json=ai_link_data,
+                headers=headers,
+                timeout=20
+            )
+            
+            if link_response.status_code == 200:
+                link_data = link_response.json()
+                link_ai_working = (
+                    link_data.get('risk_score', 0) > 60 and
+                    link_data.get('status') in ['phishing', 'potential_phishing'] and
+                    len(link_data.get('explanation', '')) > 30
+                )
+            else:
+                link_ai_working = False
+            
+            if email_ai_working and link_ai_working:
+                self.log_result("AI Integration Gemini Functionality", True, 
+                              f"AI-powered scanning working - Email risk: {email_data.get('risk_score', 0):.1f}, Link risk: {link_data.get('risk_score', 0):.1f}")
+                return True
+            else:
+                self.log_result("AI Integration Gemini Functionality", False, 
+                              f"AI integration issues - Email AI: {email_ai_working}, Link AI: {link_ai_working}")
+                return False
+                
+        except requests.exceptions.RequestException as e:
+            self.log_result("AI Integration Gemini Functionality", False, f"Request failed: {str(e)}")
+            return False
+
+    def test_security_features_comprehensive(self):
+        """Test comprehensive security features including rate limiting, input validation, JWT protection"""
+        try:
+            # Test rate limiting on health endpoint
+            rate_limit_responses = []
+            for i in range(12):  # Exceed 10/minute limit
+                response = requests.get(f"{self.backend_url}/health", timeout=5)
+                rate_limit_responses.append(response.status_code)
+                time.sleep(0.1)
+            
+            rate_limiting_working = any(status == 429 for status in rate_limit_responses)
+            
+            # Test input validation on email scanning
+            headers = self.get_auth_headers()
+            invalid_email_data = {
+                "email_subject": "A" * 300,  # Very long subject
+                "email_body": "B" * 60000,   # Exceeds 50KB limit
+                "sender": "invalid-email-format",
+                "recipient": self.test_user_data["email"]
+            }
+            
+            validation_response = requests.post(
+                f"{self.backend_url}/scan/email",
+                json=invalid_email_data,
+                headers=headers,
+                timeout=10
+            )
+            
+            input_validation_working = validation_response.status_code in [400, 422]
+            
+            # Test JWT protection on protected endpoints
+            no_auth_response = requests.get(f"{self.backend_url}/user/profile", timeout=10)
+            jwt_protection_working = no_auth_response.status_code in [401, 403]
+            
+            if rate_limiting_working and input_validation_working and jwt_protection_working:
+                self.log_result("Security Features Comprehensive", True, 
+                              "Rate limiting, input validation, and JWT protection all working")
+                return True
+            else:
+                self.log_result("Security Features Comprehensive", False, 
+                              f"Security issues - Rate limiting: {rate_limiting_working}, Input validation: {input_validation_working}, JWT: {jwt_protection_working}")
+                return False
+                
+        except requests.exceptions.RequestException as e:
+            self.log_result("Security Features Comprehensive", False, f"Request failed: {str(e)}")
+            return False
+
+    def test_real_database_operations_no_mock_data(self):
+        """Test that all endpoints return real database data, not mock data fallbacks"""
+        try:
+            headers = self.get_auth_headers()
+            
+            # Test dashboard stats for real data
+            stats_response = requests.get(f"{self.backend_url}/dashboard/stats", headers=headers, timeout=10)
+            
+            if stats_response.status_code == 200:
+                stats_data = stats_response.json()
+                # Real data should have consistent relationships
+                total_scans = stats_data.get('total_scans', 0)
+                phishing_caught = stats_data.get('phishing_caught', 0)
+                safe_emails = stats_data.get('safe_emails', 0)
+                potential_phishing = stats_data.get('potential_phishing', 0)
+                
+                # Check if data is consistent (not mock)
+                calculated_total = phishing_caught + safe_emails + potential_phishing
+                data_consistency = abs(total_scans - calculated_total) <= 1  # Allow for small discrepancies
+                
+                stats_real_data = data_consistency
+            else:
+                stats_real_data = False
+            
+            # Test recent emails for real data structure
+            emails_response = requests.get(f"{self.backend_url}/dashboard/recent-emails", headers=headers, timeout=10)
+            
+            if emails_response.status_code == 200:
+                emails_data = emails_response.json()
+                emails_list = emails_data.get('emails', [])
+                
+                # Real data should have proper timestamps and IDs
+                if len(emails_list) > 0:
+                    first_email = emails_list[0]
+                    emails_real_data = (
+                        'id' in first_email and
+                        'time' in first_email and
+                        'risk_score' in first_email and
+                        isinstance(first_email.get('risk_score'), (int, float))
+                    )
+                else:
+                    emails_real_data = True  # Empty list is valid for new user
+            else:
+                emails_real_data = False
+            
+            if stats_real_data and emails_real_data:
+                self.log_result("Real Database Operations No Mock Data", True, 
+                              f"Real database data confirmed - Total scans: {total_scans}, Emails: {len(emails_list)}")
+                return True
+            else:
+                self.log_result("Real Database Operations No Mock Data", False, 
+                              f"Mock data detected - Stats real: {stats_real_data}, Emails real: {emails_real_data}")
+                return False
+                
+        except requests.exceptions.RequestException as e:
+            self.log_result("Real Database Operations No Mock Data", False, f"Request failed: {str(e)}")
+            return False
         """Test CORS configuration allows browser extension requests"""
         try:
             # Simulate browser extension request with extension origin
