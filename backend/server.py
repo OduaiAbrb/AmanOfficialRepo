@@ -578,7 +578,7 @@ async def scan_link(
         # Use AI-enhanced link scanning with fallback
         try:
             context = getattr(link_request, 'context', '')
-            scan_results = await scan_link_with_ai(link_request.url, context)
+            scan_results = await scan_link_with_ai(link_request.url, context, current_user.id)
             logger.info(f"AI link scan successful for user {current_user.email}")
         except Exception as ai_error:
             logger.warning(f"AI link scanning failed, falling back to advanced scanning: {ai_error}")
