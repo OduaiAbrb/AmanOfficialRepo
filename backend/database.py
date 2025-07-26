@@ -56,7 +56,7 @@ async def init_collections():
     """Initialize database collections with proper indexes"""
     try:
         db = get_database()
-        if not db:
+        if db is None:
             print("⚠️ Database not available, skipping collection initialization")
             return
         
