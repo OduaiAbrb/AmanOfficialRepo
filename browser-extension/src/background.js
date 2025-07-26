@@ -1,8 +1,8 @@
-// Background service worker for Aman Cybersecurity Extension
+// Background service worker for Aman Cybersecurity Extension - FIXED VERSION
 console.log('Aman Cybersecurity Extension - Background script loaded');
 
-// API Configuration - Use environment variable for backend URL
-const API_BASE_URL = 'https://859201a4-6ec0-482a-aafb-51101591fb03.preview.emergentagent.com/api';
+// API Configuration - FIXED for localhost
+const API_BASE_URL = 'http://localhost:8001/api';
 
 // Authentication state
 let authToken = null;
@@ -35,40 +35,50 @@ async function checkAuthentication() {
       const isValid = await verifyAuthToken(stored.authToken);
       if (isValid) {
         isAuthenticated = true;
-        console.log('Extension authenticated for user:', stored.userEmail);
+        console.log('✅ Extension authenticated for user:', stored.userEmail);
       } else {
         // Token expired, clear storage
         await chrome.storage.local.remove(['authToken', 'userEmail']);
         isAuthenticated = false;
+        console.log('❌ Token expired, cleared storage');
       }
+    } else {
+      console.log('⚠️ No auth token found');
     }
   } catch (error) {
-    console.error('Authentication check failed:', error);
+    console.error('❌ Authentication check failed:', error);
   }
 }
 
-// Verify auth token with backend
+// Verify auth token with backend - FIXED URL
 async function verifyAuthToken(token) {
   try {
-    const response = await fetch(`${API_BASE_URL}/users/me`, {
+    const response = await fetch(`${API_BASE_URL}/user/profile`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       }
     });
-    return response.ok;
+    
+    if (response.ok) {
+      console.log('✅ Token verification successful');
+      return true;
+    } else {
+      console.log('❌ Token verification failed:', response.status);
+      return false;
+    }
   } catch (error) {
-    console.error('Token verification failed:', error);
+    console.error('❌ Token verification error:', error);
     return false;
   }
 }
 
-// Prompt user to authenticate
+// Prompt user to authenticate - FIXED URL
 async function promptAuthentication() {
   try {
-    // Open authentication page
-    const authUrl = `https://859201a4-6ec0-482a-aafb-51101591fb03.preview.emergentagent.com/auth`;
+    // Open authentication page - FIXED to localhost
+    const authUrl = `http://localhost:3000/auth`;
     await chrome.tabs.create({ url: authUrl });
     
     // Show notification
@@ -81,7 +91,7 @@ async function promptAuthentication() {
       });
     }
   } catch (error) {
-    console.error('Authentication prompt failed:', error);
+    console.error('❌ Authentication prompt failed:', error);
   }
 }
 
@@ -124,33 +134,35 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 });
 
-// Handle authentication
+// Handle authentication - IMPROVED
 async function handleAuthentication(authData, sendResponse) {
   try {
     if (authData.token && authData.email) {
       // Store authentication data
       await chrome.storage.local.set({
         authToken: authData.token,
-        userEmail: authData.email
+        userEmail: authData.email,
+        authenticatedAt: new Date().toISOString()
       });
       
       authToken = authData.token;
       isAuthenticated = true;
       
-      console.log('Extension authenticated successfully');
+      console.log('✅ Extension authenticated successfully for:', authData.email);
       
       sendResponse({
         success: true,
         message: 'Authentication successful'
       });
     } else {
+      console.log('❌ Invalid authentication data');
       sendResponse({
         success: false,
         error: 'Invalid authentication data'
       });
     }
   } catch (error) {
-    console.error('Authentication handling failed:', error);
+    console.error('❌ Authentication handling failed:', error);
     sendResponse({
       success: false,
       error: error.message
@@ -158,13 +170,14 @@ async function handleAuthentication(authData, sendResponse) {
   }
 }
 
-// Email scanning function with AI backend integration
+// Email scanning function with AI backend integration - FIXED
 async function handleEmailScan(emailData, sendResponse) {
   try {
-    console.log('Scanning email:', emailData.subject);
+    console.log('📧 Scanning email:', emailData.subject);
     
     // Check authentication
     if (!isAuthenticated) {
+      console.log('⚠️ Not authenticated, prompting login');
       await promptAuthentication();
       sendResponse({
         success: false,
@@ -182,25 +195,34 @@ async function handleEmailScan(emailData, sendResponse) {
       recipient: emailData.recipient || ''
     };
     
-    // Call AI-powered email scanning API
+    console.log('🔍 Sending scan request to backend...');
+    
+    // Call AI-powered email scanning API - FIXED
     const scanResult = await performEmailScanAPI(scanRequest);
     
-    // Transform API response to extension format
-    const extensionResult = transformEmailScanResult(scanResult, emailData);
-    
-    // Store scan result
-    await storeScanResult(extensionResult);
-    
-    sendResponse({
-      success: true,
-      result: extensionResult
-    });
+    if (scanResult) {
+      // Transform API response to extension format
+      const extensionResult = transformEmailScanResult(scanResult, emailData);
+      
+      // Store scan result
+      await storeScanResult(extensionResult);
+      
+      console.log('✅ Email scan completed:', extensionResult.riskLevel);
+      
+      sendResponse({
+        success: true,
+        result: extensionResult
+      });
+    } else {
+      throw new Error('No scan result received');
+    }
     
   } catch (error) {
-    console.error('Email scan error:', error);
+    console.error('❌ Email scan error:', error);
     
     // Fallback to local scanning if API fails
     if (error.message.includes('401') || error.message.includes('auth')) {
+      console.log('🔐 Authentication expired, prompting re-login');
       await promptAuthentication();
       sendResponse({
         success: false,
@@ -209,6 +231,7 @@ async function handleEmailScan(emailData, sendResponse) {
       });
     } else {
       // Use fallback scanning
+      console.log('🔄 Using fallback scanning');
       const fallbackResult = await performFallbackEmailScan(emailData);
       await storeScanResult(fallbackResult);
       
@@ -221,10 +244,10 @@ async function handleEmailScan(emailData, sendResponse) {
   }
 }
 
-// Link scanning function with AI backend integration
+// Link scanning function - FIXED
 async function handleLinkScan(linkData, sendResponse) {
   try {
-    console.log('Scanning link:', linkData.url);
+    console.log('🔗 Scanning link:', linkData.url);
     
     if (!isAuthenticated) {
       // For links, provide basic local scanning without authentication
@@ -249,7 +272,7 @@ async function handleLinkScan(linkData, sendResponse) {
     });
     
   } catch (error) {
-    console.error('Link scan error:', error);
+    console.error('❌ Link scan error:', error);
     
     // Fallback to local scanning
     const fallbackResult = await performLocalLinkScan(linkData);
@@ -261,51 +284,69 @@ async function handleLinkScan(linkData, sendResponse) {
   }
 }
 
-// AI-powered email scanning API call
+// AI-powered email scanning API call - FIXED
 async function performEmailScanAPI(emailData) {
-  const response = await fetch(`${API_BASE_URL}/scan/email`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${authToken}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(emailData)
-  });
-  
-  if (!response.ok) {
-    if (response.status === 401) {
-      isAuthenticated = false;
-      authToken = null;
-      await chrome.storage.local.remove(['authToken', 'userEmail']);
+  try {
+    console.log('🤖 Calling AI email scan API...');
+    
+    const response = await fetch(`${API_BASE_URL}/scan/email`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${authToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(emailData)
+    });
+    
+    console.log('📡 API response status:', response.status);
+    
+    if (!response.ok) {
+      if (response.status === 401) {
+        isAuthenticated = false;
+        authToken = null;
+        await chrome.storage.local.remove(['authToken', 'userEmail']);
+        throw new Error('Authentication failed');
+      }
+      throw new Error(`API request failed: ${response.status}`);
     }
-    throw new Error(`API request failed: ${response.status}`);
+    
+    const result = await response.json();
+    console.log('✅ API scan result:', result);
+    return result;
+    
+  } catch (error) {
+    console.error('❌ Email scan API error:', error);
+    throw error;
   }
-  
-  return await response.json();
 }
 
-// AI-powered link scanning API call
+// AI-powered link scanning API call - FIXED
 async function performLinkScanAPI(linkData) {
-  const response = await fetch(`${API_BASE_URL}/scan/link`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${authToken}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      url: linkData.url,
-      context: linkData.text || ''
-    })
-  });
-  
-  if (!response.ok) {
-    throw new Error(`API request failed: ${response.status}`);
+  try {
+    const response = await fetch(`${API_BASE_URL}/scan/link`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${authToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        url: linkData.url,
+        context: linkData.text || ''
+      })
+    });
+    
+    if (!response.ok) {
+      throw new Error(`API request failed: ${response.status}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('❌ Link scan API error:', error);
+    throw error;
   }
-  
-  return await response.json();
 }
 
-// Transform API email scan result to extension format
+// Transform API email scan result to extension format - IMPROVED
 function transformEmailScanResult(apiResult, originalData) {
   // Map API status to extension risk level
   const statusToRiskLevel = {
@@ -314,12 +355,15 @@ function transformEmailScanResult(apiResult, originalData) {
     'phishing': 'danger'
   };
   
+  const riskLevel = statusToRiskLevel[apiResult.status] || 'safe';
+  const riskScore = Math.round(apiResult.risk_score || 0);
+  
   return {
     id: apiResult.id || generateScanId(),
     timestamp: new Date().toISOString(),
-    riskLevel: statusToRiskLevel[apiResult.status] || 'safe',
-    riskScore: Math.round(apiResult.risk_score || 0),
-    explanation: apiResult.explanation || 'Scan completed',
+    riskLevel: riskLevel,
+    riskScore: riskScore,
+    explanation: apiResult.explanation || 'AI scan completed',
     threats: apiResult.detected_threats || [],
     threatSources: apiResult.threat_sources || [],
     recommendations: apiResult.recommendations || [],
@@ -328,7 +372,8 @@ function transformEmailScanResult(apiResult, originalData) {
       sender: originalData.sender,
       recipient: originalData.recipient
     },
-    aiPowered: true
+    aiPowered: true,
+    scanDuration: 0.5
   };
 }
 
@@ -353,20 +398,24 @@ function transformLinkScanResult(apiResult, originalData) {
   };
 }
 
-// Fallback email scanning (when API unavailable)
+// Fallback email scanning (when API unavailable) - IMPROVED
 async function performFallbackEmailScan(emailData) {
-  // Simple keyword-based scanning
+  console.log('🔄 Performing fallback email scan');
+  
   const suspiciousKeywords = [
     'urgent', 'verify account', 'click here', 'limited time', 'suspended',
-    'congratulations', 'winner', 'claim now', 'act fast', 'expires today'
+    'congratulations', 'winner', 'claim now', 'act fast', 'expires today',
+    'confirm identity', 'update payment', 'security alert'
   ];
   
   const body = (emailData.body || '').toLowerCase();
   const subject = (emailData.subject || '').toLowerCase();
+  const sender = (emailData.sender || '').toLowerCase();
   
   let suspiciousScore = 0;
   const detectedThreats = [];
   
+  // Check for suspicious keywords
   suspiciousKeywords.forEach(keyword => {
     if (body.includes(keyword) || subject.includes(keyword)) {
       suspiciousScore += 15;
@@ -375,10 +424,18 @@ async function performFallbackEmailScan(emailData) {
   });
   
   // Check sender domain
-  const sender = emailData.sender || '';
   if (!sender.includes('@') || sender.includes('noreply') || sender.includes('no-reply')) {
     suspiciousScore += 10;
   }
+  
+  // Check for suspicious domains
+  const suspiciousDomains = ['bit.ly', 'tinyurl.com', 'suspicious-site.com'];
+  suspiciousDomains.forEach(domain => {
+    if (body.includes(domain) || sender.includes(domain)) {
+      suspiciousScore += 20;
+      detectedThreats.push(`suspicious domain: ${domain}`);
+    }
+  });
   
   const riskScore = Math.min(suspiciousScore, 100);
   let riskLevel = 'safe';
@@ -394,44 +451,62 @@ async function performFallbackEmailScan(emailData) {
     timestamp: new Date().toISOString(),
     riskLevel: riskLevel,
     riskScore: riskScore,
-    explanation: generateFallbackExplanation(riskLevel),
+    explanation: generateFallbackExplanation(riskLevel, detectedThreats.length),
     threats: detectedThreats,
     emailData: {
       subject: emailData.subject,
       sender: emailData.sender,
       recipient: emailData.recipient
     },
-    fallback: true
+    fallback: true,
+    aiPowered: false
   };
 }
 
-// Local link scanning (basic checks)
+// Local link scanning (basic checks) - IMPROVED
 async function performLocalLinkScan(linkData) {
   const url = linkData.url || '';
-  const suspiciousDomains = ['bit.ly', 'tinyurl.com', 'goo.gl', 't.co'];
-  const dangerousDomains = ['phishing-site.com', 'malware-site.net'];
+  const suspiciousDomains = ['bit.ly', 'tinyurl.com', 'goo.gl', 't.co', 'ow.ly'];
+  const dangerousDomains = ['phishing-site.com', 'malware-site.net', 'suspicious-site.com'];
   
   let riskScore = 0;
   let riskLevel = 'safe';
   let explanation = 'Link appears safe';
+  const detectedPatterns = [];
   
   // Check for dangerous domains
-  if (dangerousDomains.some(domain => url.includes(domain))) {
-    riskScore = 90;
-    riskLevel = 'danger';
-    explanation = 'Known malicious domain detected';
-  }
+  dangerousDomains.forEach(domain => {
+    if (url.toLowerCase().includes(domain)) {
+      riskScore = 90;
+      riskLevel = 'danger';
+      explanation = 'Known malicious domain detected';
+      detectedPatterns.push(`malicious domain: ${domain}`);
+    }
+  });
+  
   // Check for shortened URLs
-  else if (suspiciousDomains.some(domain => url.includes(domain))) {
-    riskScore = 40;
-    riskLevel = 'warning';
-    explanation = 'Shortened URL - exercise caution';
+  if (riskScore < 90) {
+    suspiciousDomains.forEach(domain => {
+      if (url.toLowerCase().includes(domain)) {
+        riskScore = Math.max(riskScore, 40);
+        riskLevel = 'warning';
+        explanation = 'Shortened URL - exercise caution';
+        detectedPatterns.push('shortened URL');
+      }
+    });
   }
+  
   // Check for suspicious patterns
-  else if (url.includes('login') || url.includes('verify') || url.includes('secure')) {
-    riskScore = 25;
-    riskLevel = 'warning';
-    explanation = 'URL contains authentication-related keywords';
+  if (riskScore < 40) {
+    const suspiciousPatterns = ['login', 'verify', 'secure', 'update', 'confirm'];
+    suspiciousPatterns.forEach(pattern => {
+      if (url.toLowerCase().includes(pattern)) {
+        riskScore = Math.max(riskScore, 25);
+        riskLevel = 'warning';
+        explanation = 'URL contains authentication-related keywords';
+        detectedPatterns.push(`auth keyword: ${pattern}`);
+      }
+    });
   }
   
   return {
@@ -441,7 +516,9 @@ async function performLocalLinkScan(linkData) {
     riskLevel: riskLevel,
     riskScore: riskScore,
     explanation: explanation,
-    local: true
+    detectedPatterns: detectedPatterns,
+    local: true,
+    aiPowered: false
   };
 }
 
@@ -450,12 +527,12 @@ function generateScanId() {
   return 'scan_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 }
 
-function generateFallbackExplanation(riskLevel) {
+function generateFallbackExplanation(riskLevel, threatCount) {
   switch (riskLevel) {
     case 'danger':
-      return 'High risk indicators detected. Multiple suspicious patterns found.';
+      return `High risk indicators detected. ${threatCount} suspicious patterns found.`;
     case 'warning':
-      return 'Potentially suspicious content. Exercise caution with this email.';
+      return `Potentially suspicious content. ${threatCount} warning signs detected.`;
     default:
       return 'Email appears safe. No major threats detected.';
   }
@@ -480,7 +557,7 @@ async function storeScanResult(result) {
     updateExtensionBadge(result);
     
   } catch (error) {
-    console.error('Failed to store scan result:', error);
+    console.error('❌ Failed to store scan result:', error);
   }
 }
 
@@ -501,7 +578,7 @@ async function updateExtensionBadge(result) {
     }, 5000);
     
   } catch (error) {
-    console.error('Failed to update badge:', error);
+    console.error('❌ Failed to update badge:', error);
   }
 }
 
@@ -553,4 +630,12 @@ chrome.runtime.onStartup.addListener(() => {
   checkAuthentication();
 });
 
-console.log('Aman Cybersecurity Extension - Background script initialized with AI integration');
+// Listen for external messages (from web app)
+chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => {
+  if (message.action === 'authenticate') {
+    handleAuthentication(message.data, sendResponse);
+    return true;
+  }
+});
+
+console.log('✅ Aman Cybersecurity Extension - Background script initialized with AI integration');
