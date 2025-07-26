@@ -461,14 +461,14 @@ class AIEnhancedScanner:
             logger.error(f"AI email scanning failed: {e}")
             return self._fallback_scan(email_data)
     
-    async def scan_link_with_ai(self, url: str, context: str = "") -> Dict[str, Any]:
+    async def scan_link_with_ai(self, url: str, context: str = "", user_id: str = "anonymous") -> Dict[str, Any]:
         """Enhanced link scanning with AI"""
         if not self.ai_available:
             return self._fallback_link_scan(url)
         
         try:
             # Use AI analysis
-            ai_analysis = await self.ai_scanner.analyze_link(url, context)
+            ai_analysis = await self.ai_scanner.analyze_link(url, context, user_id)
             
             # Convert to response format
             return {
