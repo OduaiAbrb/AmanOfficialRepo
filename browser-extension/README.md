@@ -27,9 +27,6 @@ AI-powered real-time phishing detection and protection for Gmail and Outlook, in
 ### Prerequisites
 1. **Chrome Browser**: Version 88 or higher
 
-2. **Aman Account**: Register at [Aman Platform](https://efa74ed7-f978-4210-bbcd-d316719ab043.preview.emergentagent.com)
-
-
 ### Installation Steps
 
 #### Method 1: Developer Mode (Recommended for Testing)
@@ -56,7 +53,6 @@ AI-powered real-time phishing detection and protection for Gmail and Outlook, in
 
 1. **Login to Aman Platform**:
 
-   - Visit: https://efa74ed7-f978-4210-bbcd-d316719ab043.preview.emergentagent.com
    - Login with your credentials
 
 2. **Extension Auto-Authentication**:

@@ -157,8 +157,7 @@ function updateAuthUI(isAuthenticated, userEmail) {
 function handleLogin() {
     // Open login page
     chrome.tabs.create({ 
-        url: 'https://efa74ed7-f978-4210-bbcd-d316719ab043.preview.emergentagent.com/auth'
-
+        url: 'https://859201a4-6ec0-482a-aafb-51101591fb03.preview.emergentagent.com/auth'
     });
 }
 
@@ -319,8 +318,7 @@ function handleRefreshScan() {
 function handleOpenDashboard() {
     // Use the correct production URL
     chrome.tabs.create({ 
-        url: 'https://efa74ed7-f978-4210-bbcd-d316719ab043.preview.emergentagent.com/dashboard' 
-
+        url: 'https://859201a4-6ec0-482a-aafb-51101591fb03.preview.emergentagent.com/dashboard' 
     });
 }
 
