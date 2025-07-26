@@ -1,125 +1,137 @@
 {
-  "timestamp": "2025-07-25T16:26:49.370071",
-  "backend_url": "https://efa74ed7-f978-4210-bbcd-d316719ab043.preview.emergentagent.com/api",
+  "timestamp": "2025-07-26T09:30:07.388357",
+  "backend_url": "http://localhost:8001/api",
   "results": [
     {
       "test": "Enhanced Health Check",
       "success": true,
       "details": "Status: healthy, DB: healthy, API: healthy",
-      "timestamp": "2025-07-25T16:26:28.504606"
+      "timestamp": "2025-07-26T09:29:51.485286"
+    },
+    {
+      "test": "Database Connectivity and Collections",
+      "success": true,
+      "details": "Database healthy, using aman_cybersecurity database with proper collections",
+      "timestamp": "2025-07-26T09:29:51.488827"
     },
     {
       "test": "User Registration",
       "success": true,
-      "details": "User registered: testuser_1753460788@cybersec.com",
-      "timestamp": "2025-07-25T16:26:28.846172"
+      "details": "User registered: testuser_1753522191@cybersec.com",
+      "timestamp": "2025-07-26T09:29:51.761112"
     },
     {
       "test": "User Login",
       "success": true,
       "details": "Login successful, token type: bearer",
-      "timestamp": "2025-07-25T16:26:29.143187"
+      "timestamp": "2025-07-26T09:29:52.003095"
     },
     {
       "test": "Token Refresh",
       "success": true,
       "details": "Token refresh successful",
-      "timestamp": "2025-07-25T16:26:29.501972"
-    },
-    {
-      "test": "Browser Extension CORS Headers",
-      "success": false,
-      "details": "Preflight request failed: HTTP 400",
-      "timestamp": "2025-07-25T16:26:29.555045"
-    },
-    {
-      "test": "Extension Authentication Flow",
-      "success": true,
-      "details": "Extension authentication successful, token works for API calls",
-      "timestamp": "2025-07-25T16:26:29.885906"
-    },
-    {
-      "test": "Extension Email Scanning Integration",
-      "success": true,
-      "details": "Extension email scanning working - Risk: 95.0, Status: phishing",
-      "timestamp": "2025-07-25T16:26:33.766603"
-    },
-    {
-      "test": "Extension Link Scanning Integration",
-      "success": true,
-      "details": "Extension link scanning working - Risk: 85.0, Categories: 4",
-      "timestamp": "2025-07-25T16:26:37.008327"
-    },
-    {
-      "test": "Extension Data Transformation",
-      "success": true,
-      "details": "API responses properly formatted for extension - Stats and emails available",
-      "timestamp": "2025-07-25T16:26:37.112141"
-    },
-    {
-      "test": "Extension Error Handling",
-      "success": true,
-      "details": "Error handling working properly for extension requests",
-      "timestamp": "2025-07-25T16:26:37.220911"
-    },
-    {
-      "test": "Extension AI Fallback Mechanism",
-      "success": true,
-      "details": "Fallback working for extension - Risk: 35.0, Status: potential_phishing",
-      "timestamp": "2025-07-25T16:26:39.492768"
-    },
-    {
-      "test": "Extension Cross-Platform Compatibility",
-      "success": true,
-      "details": "All 3 browser contexts working correctly",
-      "timestamp": "2025-07-25T16:26:39.679359"
+      "timestamp": "2025-07-26T09:29:52.246300"
     },
     {
       "test": "Protected User Profile",
       "success": true,
-      "details": "User: Test User (testuser_1753460788@cybersec.com) - Role: user",
-      "timestamp": "2025-07-25T16:26:39.730971"
+      "details": "User: Test User (testuser_1753522191@cybersec.com) - Role: user",
+      "timestamp": "2025-07-26T09:29:52.250883"
     },
     {
       "test": "Protected Dashboard Stats",
-      "success": true,
-      "details": "Stats: Phishing=1, Safe=0, Potential=1, Accuracy=95.5%",
-      "timestamp": "2025-07-25T16:26:39.786213"
+      "success": false,
+      "details": "HTTP 500: {\"detail\":\"Failed to fetch dashboard stats\"}",
+      "timestamp": "2025-07-26T09:29:52.254713"
     },
     {
       "test": "Protected Recent Emails",
-      "success": true,
-      "details": "Retrieved 2 emails with valid structure and risk scores",
-      "timestamp": "2025-07-25T16:26:39.837241"
+      "success": false,
+      "details": "HTTP 500: {\"detail\":\"Failed to fetch recent emails\"}",
+      "timestamp": "2025-07-26T09:29:52.258551"
+    },
+    {
+      "test": "Real Database Operations No Mock Data",
+      "success": false,
+      "details": "Mock data detected - Stats real: False, Emails real: False",
+      "timestamp": "2025-07-26T09:29:52.265829"
+    },
+    {
+      "test": "AI Integration Gemini Functionality",
+      "success": false,
+      "details": "AI integration issues - Email AI: False, Link AI: False",
+      "timestamp": "2025-07-26T09:29:58.825447"
     },
     {
       "test": "Advanced Email Scanning",
-      "success": true,
-      "details": "Phishing detected: Risk=95.0, Status=phishing, Threats=4, Sources=1",
-      "timestamp": "2025-07-25T16:26:43.377842"
+      "success": false,
+      "details": "HTTP 500: {\"detail\":\"Email scan failed\"}",
+      "timestamp": "2025-07-26T09:30:01.340943"
     },
     {
       "test": "Enhanced Link Scanning",
       "success": true,
-      "details": "Suspicious link detected: Risk=90.0, Status=phishing, Categories=4",
-      "timestamp": "2025-07-25T16:26:47.379667"
+      "details": "Suspicious link detected: Risk=50.0, Status=potential_phishing, Categories=1",
+      "timestamp": "2025-07-26T09:30:04.425866"
+    },
+    {
+      "test": "AI Cost Management Analytics Endpoints",
+      "success": true,
+      "details": "Analytics working, Limits working, Cache access control fixed: Correctly denied access (403) for non-admin user",
+      "timestamp": "2025-07-26T09:30:04.442600"
+    },
+    {
+      "test": "Admin Panel Comprehensive",
+      "success": true,
+      "details": "All 5 admin endpoints properly deny regular user access (403)",
+      "timestamp": "2025-07-26T09:30:04.460483"
+    },
+    {
+      "test": "WebSocket Connection Capability",
+      "success": false,
+      "details": "WebSocket stats endpoint access control issue: HTTP 500",
+      "timestamp": "2025-07-26T09:30:04.463923"
+    },
+    {
+      "test": "Security Features Comprehensive",
+      "success": true,
+      "details": "Rate limiting, input validation, and JWT protection all working",
+      "timestamp": "2025-07-26T09:30:05.723442"
     },
     {
       "test": "User Settings",
       "success": true,
       "details": "Settings GET/PUT operations working correctly",
-      "timestamp": "2025-07-25T16:26:47.521824"
+      "timestamp": "2025-07-26T09:30:05.735747"
     },
     {
-      "test": "Rate Limiting",
+      "test": "Feedback Submission",
       "success": false,
-      "details": "Rate limiting not triggered - all requests succeeded",
-      "timestamp": "2025-07-25T16:26:49.367401"
+      "details": "Could not perform initial scan for feedback test",
+      "timestamp": "2025-07-26T09:30:07.358844"
+    },
+    {
+      "test": "Feedback Analytics",
+      "success": true,
+      "details": "Analytics: Total=0, Accuracy=0%, Breakdown=0 types",
+      "timestamp": "2025-07-26T09:30:07.365942"
+    },
+    {
+      "test": "Domain Threat Intelligence",
+      "success": true,
+      "details": "Domain analysis: secure-bank-update.com -> Risk=45.0, Level=potential_phishing, Category=suspicious, Sources=1",
+      "timestamp": "2025-07-26T09:30:07.381567"
+    },
+    {
+      "test": "URL Threat Intelligence",
+      "success": true,
+      "details": "URL analysis: Risk=45.0, Level=potential_phishing, Category=suspicious, Sources=1",
+      "timestamp": "2025-07-26T09:30:07.387994"
     }
   ],
   "summary": {
-    "total_tests": 19,
-    "passed": 17,
-    "failed": 2
+    "total_tests": 21,
+    "passed": 14,
+    "failed": 7
   }
 }
