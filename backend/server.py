@@ -156,7 +156,6 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     # Startup
     await connect_to_mongo()
-    await init_collections()
     await realtime_manager.start_background_tasks()
     logger.info("Application startup completed with real-time features")
     
