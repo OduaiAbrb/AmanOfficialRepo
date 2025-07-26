@@ -23,7 +23,7 @@ async def connect_to_mongo():
     try:
         MONGO_URL = os.environ.get("MONGO_URL", "mongodb://localhost:27017")
         db_instance.client = AsyncIOMotorClient(MONGO_URL)
-        db_instance.database = db_instance.client.aman_cybersecurity_db
+        db_instance.database = db_instance.client["aman_cybersecurity_db"]
         
         # Test the connection
         await db_instance.client.admin.command('ping')
