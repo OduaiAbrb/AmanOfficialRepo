@@ -47,7 +47,7 @@ export const AuthProvider = ({ children }) => {
   // Verify token validity
   const verifyToken = async (token) => {
     try {
-      const response = await axios.get(`${backendUrl}/api/user/profile`, {
+      const response = await axios.get(`${backendUrl}/user/profile`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -68,7 +68,7 @@ export const AuthProvider = ({ children }) => {
     try {
       setIsLoading(true);
       
-      const response = await axios.post(`${backendUrl}/api/auth/login`, {
+      const response = await axios.post(`${backendUrl}/auth/login`, {
         email,
         password
       });
@@ -84,7 +84,7 @@ export const AuthProvider = ({ children }) => {
         axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
         
         // Get user profile
-        const profileResponse = await axios.get(`${backendUrl}/api/user/profile`);
+        const profileResponse = await axios.get(`${backendUrl}/user/profile`);
         const userData = profileResponse.data;
         
         // Update state
@@ -130,7 +130,7 @@ export const AuthProvider = ({ children }) => {
     try {
       setIsLoading(true);
       
-      const response = await axios.post(`${backendUrl}/api/auth/register`, {
+      const response = await axios.post(`${backendUrl}/auth/register`, {
         name,
         email,
         password,

@@ -23,7 +23,10 @@ async def connect_to_mongo():
     try:
         MONGO_URL = os.environ.get("MONGO_URL", "mongodb://localhost:27017")
         db_instance.client = AsyncIOMotorClient(MONGO_URL)
-        db_instance.database = db_instance.client.aman_db
+
+
+        db_instance.database = db_instance.client["aman_cybersecurity_db"]
+
         
         # Test the connection
         await db_instance.client.admin.command('ping')
@@ -56,7 +59,7 @@ async def init_collections():
     """Initialize database collections with proper indexes"""
     try:
         db = get_database()
-        if not db:
+        if db is None:
             print("⚠️ Database not available, skipping collection initialization")
             return
         

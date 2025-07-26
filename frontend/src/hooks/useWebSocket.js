@@ -23,7 +23,9 @@ const useWebSocket = (options = {}) => {
   // Get WebSocket URL from environment
   const getWebSocketUrl = useCallback(() => {
     const backendUrl = process.env.REACT_APP_BACKEND_URL || '';
-    const wsUrl = backendUrl.replace(/^https?/, 'ws');
+    // Remove /api suffix and convert to WebSocket URL
+    const baseUrl = backendUrl.replace(/\/api$/, '');
+    const wsUrl = baseUrl.replace(/^https?/, 'ws');
     return `${wsUrl}/ws/${user?.id}`;
   }, [user?.id]);
   

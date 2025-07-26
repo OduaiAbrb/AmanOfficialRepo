@@ -66,8 +66,8 @@ const Dashboard = () => {
       const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
       
       const [statsResponse, emailsResponse] = await Promise.all([
-        axios.get(`${backendUrl}/api/dashboard/stats`),
-        axios.get(`${backendUrl}/api/dashboard/recent-emails`)
+        axios.get(`${backendUrl}/dashboard/stats`),
+        axios.get(`${backendUrl}/dashboard/recent-emails`)
       ]);
       
       setStats(statsResponse.data);
