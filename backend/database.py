@@ -185,6 +185,67 @@ class EmailScanDatabase:
         else:
             return {"total_scans": 0, "threats_blocked": 0, "safe_emails": 0}
 
+class ThreatDatabase:
+    @staticmethod
+    async def add_threat_domain(domain_data: dict):
+        db = get_database()
+        if db is None:
+            raise Exception("Database not connected")
+        
+        domain_data["id"] = str(uuid.uuid4())
+        domain_data["detected_at"] = datetime.utcnow()
+        result = await db.threat_logs.insert_one(domain_data)
+        domain_data["_id"] = result.inserted_id
+        return domain_data
+    
+    @staticmethod
+    async def check_domain_reputation(domain: str):
+        db = get_database()
+        if db is None:
+            return None
+        
+        return await db.threat_domains.find_one({"domain": domain})
+    
+    @staticmethod
+    async def update_domain_reputation(domain: str, risk_score: float, threat_type: str):
+        db = get_database()
+        if db is None:
+            return False
+        
+        await db.threat_domains.update_one(
+            {"domain": domain},
+            {
+                "$set": {
+                    "risk_score": risk_score,
+                    "threat_type": threat_type,
+                    "last_seen": datetime.utcnow()
+                }
+            },
+            upsert=True
+        )
+        return True
+
+class FeedbackDatabase:
+    @staticmethod
+    async def create_feedback(feedback_data: dict):
+        db = get_database()
+        if db is None:
+            raise Exception("Database not connected")
+        
+        feedback_data["id"] = str(uuid.uuid4())
+        feedback_data["created_at"] = datetime.utcnow()
+        result = await db.feedback.insert_one(feedback_data)
+        feedback_data["_id"] = result.inserted_id
+        return feedback_data
+    
+    @staticmethod
+    async def get_feedback_for_scan(scan_id: str):
+        db = get_database()
+        if db is None:
+            return None
+        
+        return await db.feedback.find_one({"scan_id": scan_id})
+
 class SettingsDatabase:
     @staticmethod
     async def get_user_settings(user_id: str):
