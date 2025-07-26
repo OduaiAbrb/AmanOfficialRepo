@@ -102,6 +102,12 @@ class UserDatabase:
         if db is None:
             raise Exception("Database not connected")
         
+        # Ensure user has required fields
+        user_data["id"] = str(uuid.uuid4())
+        user_data["role"] = user_data.get("role", "user")
+        user_data["is_active"] = user_data.get("is_active", True)
+        user_data["created_at"] = datetime.utcnow()
+        
         result = await db.users.insert_one(user_data)
         user_data["_id"] = result.inserted_id
         return user_data
@@ -112,7 +118,10 @@ class UserDatabase:
         if db is None:
             return None
         
-        return await db.users.find_one({"email": email})
+        user = await db.users.find_one({"email": email})
+        if user and "role" not in user:
+            user["role"] = "user"  # Default role
+        return user
     
     @staticmethod
     async def get_user_by_id(user_id: str):
@@ -120,7 +129,10 @@ class UserDatabase:
         if db is None:
             return None
         
-        return await db.users.find_one({"id": user_id})
+        user = await db.users.find_one({"id": user_id})
+        if user and "role" not in user:
+            user["role"] = "user"  # Default role
+        return user
     
     @staticmethod
     async def update_user(user_id: str, update_data: dict):
