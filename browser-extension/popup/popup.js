@@ -318,7 +318,7 @@ function handleRefreshScan() {
 function handleOpenDashboard() {
     // Use the correct production URL
     chrome.tabs.create({ 
-        url: 'https://a7ef5366-e6cc-4ff4-9acc-af148819b2aa.preview.emergentagent.com/dashboard' 
+        url: 'https://a7ef5366-e6cc-4ff4-9acc-af148819b2aa.preview.emergentagent.com/' 
     });
 }
 
