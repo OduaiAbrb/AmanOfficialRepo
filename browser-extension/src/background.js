@@ -50,7 +50,7 @@ async function checkAuthentication() {
 // Verify auth token with backend
 async function verifyAuthToken(token) {
   try {
-    const response = await fetch(`${API_BASE_URL}/users/me`, {
+    const response = await fetch(`${API_BASE_URL}/user/profile`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
