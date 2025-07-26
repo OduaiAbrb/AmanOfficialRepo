@@ -1531,57 +1531,130 @@ class BackendTester:
             return False
     
     def run_all_tests(self):
-        """Run all backend tests"""
+        """Run comprehensive backend tests after database.py and frontend .env fixes"""
         print("=" * 80)
-        print("🚀 AMAN CYBERSECURITY PLATFORM - BROWSER EXTENSION BACKEND INTEGRATION TESTS")
+        print("🚀 AMAN CYBERSECURITY PLATFORM - POST DATABASE FIXES COMPREHENSIVE TESTING")
         print("=" * 80)
         
-        # Browser Extension Backend Integration Tests
-        extension_tests = [
+        # Core system tests after fixes
+        core_tests = [
             self.test_health_endpoint,
+            self.test_database_connectivity_and_collections,
             self.test_user_registration,
             self.test_user_login,
             self.test_token_refresh,
-            self.test_browser_extension_cors_headers,
-            self.test_extension_authentication_flow,
-            self.test_extension_email_scanning_integration,
-            self.test_extension_link_scanning_integration,
-            self.test_extension_data_transformation,
-            self.test_extension_error_handling,
-            self.test_extension_ai_fallback_mechanism,
-            self.test_extension_cross_platform_compatibility,
+        ]
+        
+        # Authentication and dashboard tests
+        auth_dashboard_tests = [
             self.test_protected_user_profile,
             self.test_protected_dashboard_stats,
             self.test_protected_recent_emails,
-            self.test_advanced_email_scanning,
-            self.test_enhanced_link_scanning,
-            self.test_user_settings,
-            self.test_rate_limiting
+            self.test_real_database_operations_no_mock_data,
         ]
         
-        passed = 0
-        total = len(extension_tests)
+        # AI integration and scanning tests
+        ai_scanning_tests = [
+            self.test_ai_integration_gemini_functionality,
+            self.test_advanced_email_scanning,
+            self.test_enhanced_link_scanning,
+            self.test_ai_cost_management_analytics_endpoints,
+        ]
         
-        for test in extension_tests:
+        # Admin panel and security tests
+        admin_security_tests = [
+            self.test_admin_panel_comprehensive,
+            self.test_websocket_connection_capability,
+            self.test_security_features_comprehensive,
+            self.test_user_settings,
+        ]
+        
+        # Additional functionality tests
+        additional_tests = [
+            self.test_feedback_submission,
+            self.test_feedback_analytics,
+            self.test_domain_threat_intelligence,
+            self.test_url_threat_intelligence,
+        ]
+        
+        all_tests = core_tests + auth_dashboard_tests + ai_scanning_tests + admin_security_tests + additional_tests
+        
+        print(f"\n📋 Running {len(all_tests)} comprehensive tests...\n")
+        
+        passed = 0
+        total = len(all_tests)
+        
+        # Run tests in logical groups
+        print("🔧 CORE SYSTEM TESTS (Database & Authentication)")
+        print("-" * 50)
+        for test in core_tests:
             if test():
                 passed += 1
-            print()  # Add spacing between tests
         
+        print(f"\n📊 DASHBOARD & DATA TESTS (Real Database Operations)")
+        print("-" * 50)
+        for test in auth_dashboard_tests:
+            if test():
+                passed += 1
+        
+        print(f"\n🤖 AI INTEGRATION TESTS (Gemini API & Cost Management)")
+        print("-" * 50)
+        for test in ai_scanning_tests:
+            if test():
+                passed += 1
+        
+        print(f"\n🛡️ ADMIN PANEL & SECURITY TESTS")
+        print("-" * 50)
+        for test in admin_security_tests:
+            if test():
+                passed += 1
+        
+        print(f"\n🔍 ADDITIONAL FUNCTIONALITY TESTS")
+        print("-" * 50)
+        for test in additional_tests:
+            if test():
+                passed += 1
+        
+        # Summary
+        print("\n" + "=" * 80)
+        print("📈 COMPREHENSIVE TEST RESULTS SUMMARY")
         print("=" * 80)
-        print(f"📊 BROWSER EXTENSION BACKEND INTEGRATION TEST SUMMARY: {passed}/{total} tests passed")
         
-        if passed == total:
-            print("🎉 ALL BROWSER EXTENSION BACKEND INTEGRATION TESTS PASSED!")
-            print("✅ Extension can successfully connect to backend APIs")
-            print("✅ JWT authentication works for extension requests")
-            print("✅ AI-powered scanning works through extension calls")
-            print("✅ Data transformation works for extension format")
-            print("✅ Error handling and fallbacks work correctly")
-            print("✅ Cross-platform compatibility verified")
-            return True
+        success_rate = (passed / total) * 100
+        status_emoji = "✅" if success_rate >= 90 else "⚠️" if success_rate >= 75 else "❌"
+        
+        print(f"{status_emoji} Tests Passed: {passed}/{total} ({success_rate:.1f}%)")
+        
+        # Categorize results
+        if success_rate >= 95:
+            print("🎉 EXCELLENT: System is production-ready with all critical fixes working")
+        elif success_rate >= 85:
+            print("✅ GOOD: System is functional with minor issues")
+        elif success_rate >= 70:
+            print("⚠️ ACCEPTABLE: System has some issues that need attention")
         else:
-            print(f"⚠️  {total - passed} test(s) failed. Check details above.")
-            return False
+            print("❌ CRITICAL: System has major issues requiring immediate fixes")
+        
+        # Critical areas assessment
+        print(f"\n🎯 CRITICAL AREAS ASSESSMENT:")
+        print(f"   Database Connectivity: {'✅' if any('Database Connectivity' in r['test'] and r['success'] for r in self.results) else '❌'}")
+        print(f"   User Authentication: {'✅' if any('User Login' in r['test'] and r['success'] for r in self.results) else '❌'}")
+        print(f"   AI Integration: {'✅' if any('AI Integration' in r['test'] and r['success'] for r in self.results) else '❌'}")
+        print(f"   Admin Panel Security: {'✅' if any('Admin Panel' in r['test'] and r['success'] for r in self.results) else '❌'}")
+        print(f"   Real Database Operations: {'✅' if any('Real Database' in r['test'] and r['success'] for r in self.results) else '❌'}")
+        
+        # Failed tests details
+        failed_tests = [r for r in self.results if not r['success']]
+        if failed_tests:
+            print(f"\n❌ FAILED TESTS REQUIRING ATTENTION:")
+            for test in failed_tests:
+                print(f"   • {test['test']}: {test['details']}")
+        
+        print(f"\n🔗 Backend URL tested: {self.backend_url}")
+        print(f"⏰ Test completed at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        print("=" * 80)
+        
+        return passed, total, success_rate
     
     def save_results(self):
         """Save test results to file"""
