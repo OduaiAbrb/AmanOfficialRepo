@@ -46,6 +46,9 @@ async def close_mongo_connection():
 
 def get_database():
     """Get database instance"""
+    if db_instance.database is None:
+        print("⚠️ Database not connected")
+        return None
     return db_instance.database
 
 # Collections and indexes initialization
