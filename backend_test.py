@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
-Backend API Testing Suite for Aman Cybersecurity Platform - Browser Extension Backend Integration Testing
-Tests browser extension API integration, authentication flow, AI-powered scanning, and cross-platform compatibility
+Backend API Testing Suite for Aman Cybersecurity Platform - Post Database Fixes Comprehensive Testing
+Tests database connectivity, user authentication, dashboard endpoints, AI integration, admin panel, and security features
+after critical fixes to database.py and frontend .env file
 """
 
 import requests
