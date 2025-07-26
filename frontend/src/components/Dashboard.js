@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import useWebSocket from '../hooks/useWebSocket';
+import RealTimeNotifications from './RealTimeNotifications';
 import axios from 'axios';
 
 const Dashboard = () => {
@@ -14,19 +16,47 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  // WebSocket connection for real-time updates
+  const { 
+    statistics: realtimeStats, 
+    isConnected, 
+    connectionStatus,
+    requestStatistics 
+  } = useWebSocket();
+
   useEffect(() => {
     if (!isAuthenticated) {
       navigate('/auth');
       return;
     }
     
-    // Fetch dashboard data
+    // Fetch initial dashboard data
     fetchDashboardData();
     
     // Set current page based on URL
     const path = location.pathname.split('/')[2] || 'overview';
     setCurrentPage(path);
   }, [location, isAuthenticated, navigate]);
+
+  // Update stats when real-time data is received
+  useEffect(() => {
+    if (realtimeStats) {
+      setStats(prevStats => ({
+        ...prevStats,
+        phishing_emails_caught: realtimeStats.threats_blocked || 0,
+        emails_scanned: realtimeStats.today_scans || 0,
+        potential_phishing: Math.max(0, (realtimeStats.today_scans || 0) - (realtimeStats.threats_blocked || 0)),
+        avg_risk_score: realtimeStats.avg_risk_score || 0
+      }));
+      
+      // Update recent emails from real-time data
+      if (realtimeStats.recent_scans) {
+        setRecentEmails(realtimeStats.recent_scans);
+      }
+      
+      setLoading(false);
+    }
+  }, [realtimeStats]);
 
   const fetchDashboardData = async () => {
     try {
@@ -104,12 +134,21 @@ const Dashboard = () => {
     { id: 'intelligence', icon: '🧠', label: 'Threat Intelligence', path: '/dashboard/intelligence', comingSoon: true },
     { id: 'team', icon: '👥', label: 'Team Overview', path: '/dashboard/team', comingSoon: true },
     { id: 'profile', icon: '👤', label: 'User Profile', path: '/dashboard/profile' },
-    { id: 'settings', icon: '⚙️', label: 'Settings', path: '/dashboard/settings' }
+    { id: 'settings', icon: '⚙️', label: 'Settings', path: '/dashboard/settings' },
+    // Admin panel link for admin users
+    ...(user && ['admin', 'super_admin'].includes(user.role) ? [
+      { id: 'admin', icon: '🔒', label: 'Admin Panel', path: '/admin', isAdmin: true }
+    ] : [])
   ];
 
   const handleNavigation = (item) => {
-    setCurrentPage(item.id);
-    navigate(item.path);
+    if (item.isAdmin) {
+      // Navigate to admin panel
+      window.location.href = item.path;
+    } else {
+      setCurrentPage(item.id);
+      navigate(item.path);
+    }
   };
 
   const getStatusColor = (status) => {
@@ -315,16 +354,25 @@ const Dashboard = () => {
                   className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
                     currentPage === item.id
                       ? 'bg-primary text-white'
+                      : item.isAdmin
+                      ? 'text-red-700 hover:bg-red-50 border border-red-200'
                       : 'text-gray-700 hover:bg-gray-100'
                   }`}
                 >
                   <span className="text-lg">{item.icon}</span>
                   {sidebarOpen && (
                     <>
-                      <span className="font-medium">{item.label}</span>
+                      <span className={`font-medium ${item.isAdmin ? 'text-red-700' : ''}`}>
+                        {item.label}
+                      </span>
                       {item.comingSoon && (
                         <span className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded">
                           Soon
+                        </span>
+                      )}
+                      {item.isAdmin && (
+                        <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded">
+                          Admin
                         </span>
                       )}
                     </>
@@ -376,8 +424,38 @@ const Dashboard = () => {
 
       {/* Main Content */}
       <div className="flex-1 p-8">
+        {/* Real-time Connection Status */}
+        <div className="mb-4">
+          <div className="flex items-center space-x-4">
+            <div className={`flex items-center space-x-2 px-3 py-1 rounded-full text-sm ${
+              isConnected 
+                ? 'bg-green-100 text-green-800' 
+                : 'bg-red-100 text-red-800'
+            }`}>
+              <div className={`w-2 h-2 rounded-full ${
+                isConnected ? 'bg-green-500' : 'bg-red-500'
+              }`} />
+              <span>
+                {isConnected ? 'Real-time updates active' : `Connection ${connectionStatus}`}
+              </span>
+            </div>
+            
+            {!isConnected && (
+              <button
+                onClick={requestStatistics}
+                className="text-sm text-blue-600 hover:text-blue-800"
+              >
+                Retry Connection
+              </button>
+            )}
+          </div>
+        </div>
+        
         {renderMainContent()}
       </div>
+
+      {/* Real-time Notifications */}
+      <RealTimeNotifications />
 
       {/* Call to Action - Bottom Right */}
       <div className="fixed bottom-6 right-6 z-50">

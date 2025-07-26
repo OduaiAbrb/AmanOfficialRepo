@@ -1,9 +1,9 @@
 """
 Aman Cybersecurity Platform - Secure Backend API
-Comprehensive FastAPI backend with JWT authentication, security middleware, and real database operations
+Comprehensive FastAPI backend with JWT authentication, security middleware, AI integration, and real-time updates
 """
 
-from fastapi import FastAPI, HTTPException, Depends, Request, BackgroundTasks
+from fastapi import FastAPI, HTTPException, Depends, Request, BackgroundTasks, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from slowapi import Limiter
@@ -15,12 +15,21 @@ from dotenv import load_dotenv
 from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any
 import logging
+import asyncio
+import json
+from contextlib import asynccontextmanager
 
-# Import advanced modules and AI scanner
+# Import modules
 from email_scanner import scan_email_advanced, scan_link_advanced
 from ai_scanner import scan_email_with_ai, scan_link_with_ai
 from feedback_system import submit_scan_feedback, get_user_feedback_analytics
 from threat_intelligence import check_domain_reputation, check_url_reputation
+from realtime_manager import realtime_manager, notify_threat_detected, notify_scan_completed
+from admin_manager import (
+    get_admin_dashboard_stats, get_user_management_data, 
+    update_user_status, update_user_role, get_threat_management_data,
+    get_system_monitoring_data, get_admin_audit_log
+)
 from models import (
     UserCreate, UserResponse, LoginRequest, Token, RefreshTokenRequest,
     EmailScanRequest, EmailScanResponse, DashboardStats, DashboardData,
@@ -29,15 +38,16 @@ from models import (
     LinkScanRequest, LinkScanResponse, UserUpdate, UserSettings, ScanStatus
 )
 from auth import (
-    authenticate_user, create_user, get_current_active_user, create_token_response,
+    get_current_active_user, create_access_token, create_refresh_token,
+    authenticate_user, create_user, create_token_response,
     verify_token, get_user_by_id, update_user_last_login
 )
 from security import (
-    limiter, SecurityMiddleware, validate_input, log_security_event,
-    auth_rate_limiter, IPValidator
+    SecurityMiddleware, IPValidator, InputValidator, log_security_event, validate_input,
+    limiter, auth_rate_limiter
 )
 from database import (
-    connect_to_mongo, close_mongo_connection, init_collections,
+    get_database, connect_to_mongo, close_mongo_connection, init_collections,
     UserDatabase, EmailScanDatabase, ThreatDatabase, FeedbackDatabase,
     SettingsDatabase
 )
@@ -52,13 +62,29 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Initialize FastAPI app
+# Lifespan context manager for startup and shutdown
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    await connect_to_mongo()
+    await init_collections()
+    await realtime_manager.start_background_tasks()
+    logger.info("Application startup completed with real-time features")
+    
+    yield
+    
+    # Shutdown
+    await close_mongo_connection()
+    logger.info("Application shutdown completed")
+
+# Initialize FastAPI app with lifespan management
 app = FastAPI(
-    title="Aman Cybersecurity Platform",
-    description="Advanced cybersecurity platform with AI-powered phishing detection",
-    version="1.0.0",
+    title="Aman Cybersecurity Platform API",
+    description="AI-powered cybersecurity platform with real-time threat detection and management",
+    version="2.0.0",
     docs_url="/docs" if os.getenv("ENVIRONMENT") == "development" else None,
-    redoc_url="/redoc" if os.getenv("ENVIRONMENT") == "development" else None
+    redoc_url="/redoc" if os.getenv("ENVIRONMENT") == "development" else None,
+    lifespan=lifespan
 )
 
 # Add rate limiting
@@ -90,21 +116,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Startup and shutdown events
-@app.on_event("startup")
-async def startup_event():
-    """Initialize database and other startup tasks"""
-    logger.info("Starting Aman Cybersecurity Platform...")
-    await connect_to_mongo()
-    await init_collections()
-    logger.info("✅ Startup completed successfully")
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Cleanup on shutdown"""
-    logger.info("Shutting down Aman Cybersecurity Platform...")
-    await close_mongo_connection()
-    logger.info("✅ Shutdown completed")
 
 # Health check endpoint
 @app.get("/api/health", response_model=HealthResponse)
@@ -113,7 +124,6 @@ async def health_check(request: Request):
     """Health check endpoint with system status"""
     try:
         # Check database connectivity
-        from database import get_database
         db = get_database()
         await db.command('ping')
         db_status = "healthy"
@@ -426,7 +436,7 @@ async def scan_email(
         
         # Use AI-enhanced scanning with fallback
         try:
-            scan_results = await scan_email_with_ai(validated_data)
+            scan_results = await scan_email_with_ai(validated_data, current_user.id)
             logger.info(f"AI email scan successful for user {current_user.email}")
         except Exception as ai_error:
             logger.warning(f"AI scanning failed, falling back to advanced scanning: {ai_error}")
@@ -476,6 +486,30 @@ async def scan_email(
         }
         
         scan_result = await EmailScanDatabase.create_email_scan(scan_data)
+        
+        # Send real-time notifications
+        try:
+            # Convert scan result to notification format
+            notification_data = {
+                "id": scan_result.id,
+                "status": status.value,
+                "risk_score": risk_score,
+                "explanation": explanation,
+                "threat_sources": threat_sources,
+                "detected_threats": detected_threats,
+                "recommendations": recommendations
+            }
+            
+            # Send threat notification if dangerous
+            if status in [ScanStatus.POTENTIAL_PHISHING, ScanStatus.PHISHING]:
+                await notify_threat_detected(current_user.id, notification_data)
+            
+            # Send scan completion notification
+            await notify_scan_completed(current_user.id, notification_data)
+            
+        except Exception as notification_error:
+            # Don't fail the scan if notifications fail
+            logger.warning(f"Real-time notification failed: {notification_error}")
         
         # Enhanced security logging
         log_security_event("EMAIL_SCAN_COMPLETED", {
@@ -790,6 +824,451 @@ async def check_url_threat_intelligence(
         raise HTTPException(
             status_code=500,
             detail="Failed to check URL reputation"
+        )
+
+# WebSocket endpoint for real-time updates
+@app.websocket("/api/ws/{user_id}")
+async def websocket_endpoint(websocket: WebSocket, user_id: str):
+    """WebSocket endpoint for real-time dashboard updates and notifications"""
+    try:
+        # Accept connection
+        connection_id = await realtime_manager.connect(websocket, user_id)
+        
+        try:
+            while True:
+                # Keep connection alive and handle incoming messages
+                try:
+                    data = await websocket.receive_text()
+                    message = json.loads(data)
+                    
+                    # Handle different message types
+                    if message.get("type") == "subscribe":
+                        # Handle subscription requests
+                        subscription_types = message.get("subscriptions", ["all"])
+                        # Update connection subscription preferences
+                        if connection_id in realtime_manager.connections:
+                            realtime_manager.connections[connection_id].subscription_types = set(subscription_types)
+                    
+                    elif message.get("type") == "request_stats":
+                        # Send fresh statistics on request
+                        await realtime_manager.send_dashboard_statistics(user_id)
+                    
+                    elif message.get("type") == "ping":
+                        # Handle ping messages to keep connection alive
+                        await websocket.send_text(json.dumps({
+                            "type": "pong",
+                            "timestamp": datetime.utcnow().isoformat()
+                        }))
+                
+                except WebSocketDisconnect:
+                    break
+                    
+                except json.JSONDecodeError:
+                    # Invalid JSON received, send error
+                    await websocket.send_text(json.dumps({
+                        "type": "error",
+                        "message": "Invalid JSON format"
+                    }))
+                
+                except Exception as e:
+                    logger.error(f"WebSocket message handling error: {e}")
+                    await websocket.send_text(json.dumps({
+                        "type": "error", 
+                        "message": "Message handling failed"
+                    }))
+                    
+        except WebSocketDisconnect:
+            pass
+        finally:
+            await realtime_manager.disconnect(connection_id)
+            
+    except Exception as e:
+        logger.error(f"WebSocket connection error: {e}")
+        try:
+            await websocket.close(code=1011, reason="Internal server error")
+        except:
+            pass
+
+# WebSocket connection statistics endpoint (admin only)
+@app.get("/api/ws/stats")
+async def websocket_stats(
+    request: Request,
+    current_user: UserResponse = Depends(get_current_active_user)
+):
+    """Get WebSocket connection statistics"""
+    try:
+        # Only allow admin users to view connection stats
+        if current_user.role != "admin":
+            raise HTTPException(
+                status_code=403,
+                detail="Admin access required"
+            )
+        
+        stats = realtime_manager.get_connection_stats()
+        return {
+            "connection_statistics": stats,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"WebSocket stats error: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to fetch connection statistics"
+        )
+
+# AI Usage Analytics endpoints
+@app.get("/api/ai/usage/analytics")
+@limiter.limit("10/minute")
+async def get_ai_usage_analytics(
+    request: Request,
+    days: int = 30,
+    current_user: UserResponse = Depends(get_current_active_user)
+):
+    """Get user's AI usage analytics"""
+    try:
+        from ai_cost_manager import usage_tracker
+        
+        analytics = await usage_tracker.get_user_usage_analytics(current_user.id, days)
+        
+        return {
+            "user_id": current_user.id,
+            "analytics": analytics,
+            "generated_at": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"AI usage analytics error: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to fetch AI usage analytics"
+        )
+
+@app.get("/api/ai/usage/limits")
+@limiter.limit("20/minute") 
+async def get_ai_usage_limits(
+    request: Request,
+    current_user: UserResponse = Depends(get_current_active_user)
+):
+    """Get user's current AI usage and limits"""
+    try:
+        from ai_cost_manager import check_ai_usage_limits
+        
+        # Default to free tier - can be enhanced with user tier lookup
+        user_tier = getattr(current_user, 'tier', 'free_tier')
+        within_limits, usage_info = await check_ai_usage_limits(current_user.id, user_tier)
+        
+        return {
+            "user_id": current_user.id,
+            "user_tier": user_tier,
+            **usage_info,
+            "checked_at": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"AI usage limits error: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to fetch AI usage limits"
+        )
+
+@app.get("/api/ai/cache/stats")
+@limiter.limit("5/minute")
+async def get_ai_cache_stats(
+    request: Request,
+    current_user: UserResponse = Depends(get_current_active_user)
+):
+    """Get AI cache performance statistics (admin only)"""
+    try:
+        # Only allow admin users to view cache stats
+        if getattr(current_user, 'role', 'user') != "admin":
+            raise HTTPException(
+                status_code=403,
+                detail="Admin access required to view cache statistics"
+            )
+        
+        from ai_cost_manager import cache_manager
+        
+        cache_stats = await cache_manager.get_cache_stats()
+        
+        return {
+            "cache_statistics": cache_stats,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"AI cache stats error: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to fetch AI cache statistics"
+        )
+
+# Admin Panel Management endpoints
+@app.get("/api/admin/dashboard/stats")
+@limiter.limit("10/minute")
+async def get_admin_dashboard_statistics(
+    request: Request,
+    current_user: UserResponse = Depends(get_current_active_user)
+):
+    """Get admin dashboard statistics (admin only)"""
+    try:
+        # Only allow admin users
+        if getattr(current_user, 'role', 'user') not in ["admin", "super_admin"]:
+            raise HTTPException(
+                status_code=403,
+                detail="Admin access required"
+            )
+        
+        stats = await get_admin_dashboard_stats()
+        
+        return {
+            "statistics": {
+                "total_users": stats.total_users,
+                "active_users": stats.active_users,
+                "total_organizations": stats.total_organizations,
+                "active_organizations": stats.active_organizations,
+                "today_scans": stats.today_scans,
+                "today_threats": stats.today_threats,
+                "total_threats_blocked": stats.total_threats_blocked,
+                "avg_risk_score": stats.avg_risk_score,
+                "ai_usage_cost": stats.ai_usage_cost,
+                "cache_hit_rate": stats.cache_hit_rate
+            },
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Admin dashboard stats error: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to fetch admin dashboard statistics"
+        )
+
+@app.get("/api/admin/users")
+@limiter.limit("20/minute")
+async def get_admin_user_management(
+    request: Request,
+    page: int = 1,
+    page_size: int = 50,
+    search: str = "",
+    current_user: UserResponse = Depends(get_current_active_user)
+):
+    """Get user management data (admin only)"""
+    try:
+        # Only allow admin users
+        if getattr(current_user, 'role', 'user') not in ["admin", "super_admin"]:
+            raise HTTPException(
+                status_code=403,
+                detail="Admin access required"
+            )
+        
+        # Validate pagination parameters
+        page = max(1, min(page, 1000))  # Limit to reasonable range
+        page_size = max(1, min(page_size, 100))  # Limit page size
+        
+        user_data = await get_user_management_data(page, page_size, search)
+        
+        return user_data
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Admin user management error: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to fetch user management data"
+        )
+
+@app.put("/api/admin/users/{user_id}/status")
+@limiter.limit("30/minute")
+async def update_admin_user_status(
+    request: Request,
+    user_id: str,
+    status_data: dict,
+    current_user: UserResponse = Depends(get_current_active_user)
+):
+    """Update user status (admin only)"""
+    try:
+        # Only allow admin users
+        if getattr(current_user, 'role', 'user') not in ["admin", "super_admin"]:
+            raise HTTPException(
+                status_code=403,
+                detail="Admin access required"
+            )
+        
+        # Validate input
+        if "is_active" not in status_data:
+            raise HTTPException(
+                status_code=400,
+                detail="Missing is_active field"
+            )
+        
+        is_active = bool(status_data["is_active"])
+        
+        result = await update_user_status(current_user.id, user_id, is_active)
+        
+        if result["success"]:
+            return {"message": result["message"], "user_id": user_id, "is_active": is_active}
+        else:
+            raise HTTPException(
+                status_code=400,
+                detail=result["error"]
+            )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Admin user status update error: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to update user status"
+        )
+
+@app.put("/api/admin/users/{user_id}/role")
+@limiter.limit("20/minute")
+async def update_admin_user_role(
+    request: Request,
+    user_id: str,
+    role_data: dict,
+    current_user: UserResponse = Depends(get_current_active_user)
+):
+    """Update user role (admin only)"""
+    try:
+        # Only allow super admin users for role changes
+        if getattr(current_user, 'role', 'user') != "super_admin":
+            raise HTTPException(
+                status_code=403,
+                detail="Super admin access required"
+            )
+        
+        # Validate input
+        if "role" not in role_data:
+            raise HTTPException(
+                status_code=400,
+                detail="Missing role field"
+            )
+        
+        new_role = str(role_data["role"])
+        
+        result = await update_user_role(current_user.id, user_id, new_role)
+        
+        if result["success"]:
+            return {"message": result["message"], "user_id": user_id, "new_role": new_role}
+        else:
+            raise HTTPException(
+                status_code=400,
+                detail=result["error"]
+            )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Admin user role update error: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to update user role"
+        )
+
+@app.get("/api/admin/threats")
+@limiter.limit("10/minute")
+async def get_admin_threat_management(
+    request: Request,
+    days: int = 7,
+    current_user: UserResponse = Depends(get_current_active_user)
+):
+    """Get threat management data (admin only)"""
+    try:
+        # Only allow admin users
+        if getattr(current_user, 'role', 'user') not in ["admin", "super_admin"]:
+            raise HTTPException(
+                status_code=403,
+                detail="Admin access required"
+            )
+        
+        # Validate days parameter
+        days = max(1, min(days, 90))  # Limit to reasonable range
+        
+        threat_data = await get_threat_management_data(days)
+        
+        return threat_data
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Admin threat management error: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to fetch threat management data"
+        )
+
+@app.get("/api/admin/system/monitoring")
+@limiter.limit("5/minute")
+async def get_admin_system_monitoring(
+    request: Request,
+    current_user: UserResponse = Depends(get_current_active_user)
+):
+    """Get system monitoring data (admin only)"""
+    try:
+        # Only allow admin users
+        if getattr(current_user, 'role', 'user') not in ["admin", "super_admin"]:
+            raise HTTPException(
+                status_code=403,
+                detail="Admin access required"
+            )
+        
+        monitoring_data = await get_system_monitoring_data()
+        
+        return monitoring_data
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Admin system monitoring error: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to fetch system monitoring data"
+        )
+
+@app.get("/api/admin/audit/log")
+@limiter.limit("10/minute")
+async def get_admin_audit_logs(
+    request: Request,
+    page: int = 1,
+    page_size: int = 50,
+    days: int = 30,
+    current_user: UserResponse = Depends(get_current_active_user)
+):
+    """Get admin audit logs (super admin only)"""
+    try:
+        # Only allow super admin users
+        if getattr(current_user, 'role', 'user') != "super_admin":
+            raise HTTPException(
+                status_code=403,
+                detail="Super admin access required"
+            )
+        
+        # Validate parameters
+        page = max(1, min(page, 1000))
+        page_size = max(1, min(page_size, 100))
+        days = max(1, min(days, 365))
+        
+        audit_log = await get_admin_audit_log(page, page_size, days)
+        
+        return audit_log
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Admin audit log error: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to fetch admin audit logs"
         )
 
 # Helper functions

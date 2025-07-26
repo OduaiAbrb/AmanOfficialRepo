@@ -1,0 +1,175 @@
+/* Aman Cybersecurity Extension - Content Script Styles */
+
+/* Security Badge Styles */
+.aman-security-badge {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  z-index: 1000;
+}
+
+.aman-security-badge * {
+  box-sizing: border-box;
+}
+
+/* Scanning Indicator Styles */
+.aman-scanning-indicator {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  z-index: 1001;
+}
+
+/* Link Badge Styles */
+.aman-link-badge {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  z-index: 999;
+}
+
+/* Extension Indicator */
+#aman-extension-indicator {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  transition: opacity 0.3s ease;
+}
+
+/* Spinner Animation */
+@keyframes amanSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.aman-spinner {
+  animation: amanSpin 1s linear infinite;
+}
+
+/* Badge Hover Effects */
+.aman-security-badge:hover {
+  transform: translateY(-1px);
+  transition: transform 0.2s ease;
+}
+
+/* Link Badge Hover Effects */
+.aman-link-badge span:hover {
+  opacity: 0.8;
+  cursor: help;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .aman-security-badge {
+    font-size: 12px !important;
+    padding: 6px 10px !important;
+  }
+  
+  .aman-link-badge span {
+    font-size: 9px !important;
+    padding: 1px 4px !important;
+  }
+  
+  #aman-extension-indicator {
+    font-size: 11px !important;
+    padding: 4px 8px !important;
+  }
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+  .aman-security-badge {
+    border-width: 2px !important;
+  }
+  
+  .aman-link-badge span {
+    border: 1px solid currentColor;
+  }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .aman-security-badge[data-level="safe"] {
+    background: #064e3b !important;
+    border-color: #24fa39 !important;
+    color: #a7f3d0 !important;
+  }
+  
+  .aman-security-badge[data-level="warning"] {
+    background: #451a03 !important;
+    border-color: #f59e0b !important;
+    color: #fed7aa !important;
+  }
+  
+  .aman-security-badge[data-level="danger"] {
+    background: #450a0a !important;
+    border-color: #ef4444 !important;
+    color: #fecaca !important;
+  }
+  
+  .aman-scanning-indicator {
+    background: #1e293b !important;
+    border-color: #475569 !important;
+    color: #cbd5e1 !important;
+  }
+}
+
+/* Animation for new badges */
+.aman-security-badge {
+  animation: amanFadeIn 0.3s ease-out;
+}
+
+@keyframes amanFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Prevent conflicts with email platform styles */
+.aman-security-badge,
+.aman-scanning-indicator,
+.aman-link-badge {
+  all: unset;
+  display: block !important;
+}
+
+.aman-security-badge *,
+.aman-scanning-indicator *,
+.aman-link-badge * {
+  all: unset;
+  display: inline !important;
+}
+
+/* Ensure visibility above email platform elements */
+.aman-security-badge,
+.aman-scanning-indicator {
+  position: relative;
+  z-index: 10000;
+  margin: 8px 0 !important;
+  clear: both;
+}
+
+/* Tooltip styles for additional information */
+.aman-tooltip {
+  position: relative;
+  cursor: help;
+}
+
+.aman-tooltip::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1f2937;
+  color: white;
+  padding: 6px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+  z-index: 10001;
+}
+
+.aman-tooltip:hover::after {
+  opacity: 1;
+}
