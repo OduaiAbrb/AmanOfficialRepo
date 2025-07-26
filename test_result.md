@@ -2213,7 +2213,7 @@ All backend API endpoints have been thoroughly tested and are working correctly.
 - ✅ API prefix '/api' working as expected for Kubernetes ingress
 
 ### Backend URL Configuration:
-- **External URL**: `https://30cbd4d9-b4c7-4721-ba22-5b885cf844b0.preview.emergentagent.com/api`
+- **External URL**: `https://859201a4-6ec0-482a-aafb-51101591fb03.preview.emergentagent.com/api`
 - **Internal Port**: 8001 (properly mapped via supervisor)
 - **Database**: MongoDB running on localhost:27017
 
@@ -2301,7 +2301,7 @@ All frontend components have been thoroughly tested and are working correctly.
 - ✅ Recent emails show proper color coding (red/green/yellow)
 
 ### Frontend URL Configuration:
-- **External URL**: `https://30cbd4d9-b4c7-4721-ba22-5b885cf844b0.preview.emergentagent.com`
+- **External URL**: `https://859201a4-6ec0-482a-aafb-51101591fb03.preview.emergentagent.com`
 - **Backend API**: Successfully integrates with backend at configured URL
 - **Internal Port**: 3000 (properly mapped via supervisor)
 
