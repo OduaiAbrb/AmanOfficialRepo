@@ -1072,9 +1072,18 @@ async def get_ai_cache_stats(
                 detail="Admin access required to view cache statistics"
             )
         
-        from ai_cost_manager import cache_manager
-        
-        cache_stats = await cache_manager.get_cache_stats()
+        # Try to get cache stats with fallback
+        try:
+            from ai_cost_manager import cache_manager
+            cache_stats = await cache_manager.get_cache_stats()
+        except ImportError:
+            cache_stats = {
+                "total_requests": 0,
+                "cache_hits": 0,
+                "cache_misses": 0,
+                "hit_rate": 0.0,
+                "total_savings": 0.0
+            }
         
         return {
             "cache_statistics": cache_stats,
