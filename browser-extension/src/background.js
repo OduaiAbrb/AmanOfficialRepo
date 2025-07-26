@@ -68,7 +68,7 @@ async function verifyAuthToken(token) {
 async function promptAuthentication() {
   try {
     // Open authentication page
-    const authUrl = `https://a7ef5366-e6cc-4ff4-9acc-af148819b2aa.preview.emergentagent.com/auth`;
+    const authUrl = `https://a7ef5366-e6cc-4ff4-9acc-af148819b2aa.preview.emergentagent.com/`;
     await chrome.tabs.create({ url: authUrl });
     
     // Show notification
