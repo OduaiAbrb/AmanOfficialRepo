@@ -139,10 +139,20 @@ class EmailScanDatabase:
         if db is None:
             raise Exception("Database not connected")
         
+        # Generate ID and set timestamps
+        scan_data["id"] = str(uuid.uuid4())
         scan_data["created_at"] = datetime.utcnow()
+        scan_data["scanned_at"] = datetime.utcnow()
+        
         result = await db.email_scans.insert_one(scan_data)
-        scan_data["_id"] = result.inserted_id
-        return scan_data
+        
+        # Return an object-like structure with id attribute
+        class ScanResult:
+            def __init__(self, data):
+                self.id = data["id"]
+                self.__dict__.update(data)
+        
+        return ScanResult(scan_data)
     
     @staticmethod
     async def get_recent_scans(user_id: str, limit: int = 10):
@@ -154,23 +164,50 @@ class EmailScanDatabase:
         return await cursor.to_list(limit)
     
     @staticmethod
-    async def get_user_stats(user_id: str):
+    async def get_user_recent_scans(user_id: str, limit: int = 10):
+        """Get recent scans for user with proper structure"""
         db = get_database()
         if db is None:
-            return {"total_scans": 0, "threats_blocked": 0, "safe_emails": 0}
+            return []
         
-        # Get today's date
-        today = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        cursor = db.email_scans.find({"user_id": user_id}).sort("created_at", -1).limit(limit)
+        scans = await cursor.to_list(limit)
         
-        # Aggregate stats
+        # Convert to proper structure
+        result_scans = []
+        for scan in scans:
+            class ScanResult:
+                def __init__(self, data):
+                    self.id = data.get("id", str(data.get("_id", "")))
+                    self.email_subject = data.get("email_subject", "")
+                    self.sender = data.get("sender", "")
+                    self.scan_result = data.get("scan_result", "safe")
+                    self.risk_score = data.get("risk_score", 0.0)
+                    self.scanned_at = data.get("scanned_at", data.get("created_at", datetime.utcnow()))
+            
+            result_scans.append(ScanResult(scan))
+        
+        return result_scans
+    
+    @staticmethod
+    async def get_dashboard_stats(user_id: str):
+        """Get dashboard statistics for user"""
+        db = get_database()
+        if db is None:
+            return {"total_scans": 0, "phishing_caught": 0, "safe_emails": 0, "potential_phishing": 0}
+        
+        # Aggregate all-time stats for user
         pipeline = [
-            {"$match": {"user_id": user_id, "created_at": {"$gte": today}}},
+            {"$match": {"user_id": user_id}},
             {
                 "$group": {
                     "_id": None,
                     "total_scans": {"$sum": 1},
-                    "threats_blocked": {
-                        "$sum": {"$cond": [{"$in": ["$scan_result", ["potential_phishing", "phishing"]]}, 1, 0]}
+                    "phishing_caught": {
+                        "$sum": {"$cond": [{"$eq": ["$scan_result", "phishing"]}, 1, 0]}
+                    },
+                    "potential_phishing": {
+                        "$sum": {"$cond": [{"$eq": ["$scan_result", "potential_phishing"]}, 1, 0]}
                     },
                     "safe_emails": {
                         "$sum": {"$cond": [{"$eq": ["$scan_result", "safe"]}, 1, 0]}
@@ -183,7 +220,12 @@ class EmailScanDatabase:
         if result:
             return result[0]
         else:
-            return {"total_scans": 0, "threats_blocked": 0, "safe_emails": 0}
+            return {"total_scans": 0, "phishing_caught": 0, "safe_emails": 0, "potential_phishing": 0}
+    
+    @staticmethod
+    async def get_user_stats(user_id: str):
+        """Get user statistics (legacy method)"""
+        return await EmailScanDatabase.get_dashboard_stats(user_id)
 
 class ThreatDatabase:
     @staticmethod
