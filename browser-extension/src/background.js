@@ -2,7 +2,7 @@
 console.log('Aman Cybersecurity Extension - Background script loaded');
 
 // API Configuration - Use environment variable for backend URL
-const API_BASE_URL = 'https://30cbd4d9-b4c7-4721-ba22-5b885cf844b0.preview.emergentagent.com/api';
+const API_BASE_URL = 'https://a7ef5366-e6cc-4ff4-9acc-af148819b2aa.preview.emergentagent.com/api';
 
 // Authentication state
 let authToken = null;
@@ -50,7 +50,7 @@ async function checkAuthentication() {
 // Verify auth token with backend
 async function verifyAuthToken(token) {
   try {
-    const response = await fetch(`${API_BASE_URL}/users/me`, {
+    const response = await fetch(`${API_BASE_URL}/user/profile`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -68,7 +68,7 @@ async function verifyAuthToken(token) {
 async function promptAuthentication() {
   try {
     // Open authentication page
-    const authUrl = `https://30cbd4d9-b4c7-4721-ba22-5b885cf844b0.preview.emergentagent.com/auth`;
+    const authUrl = `https://a7ef5366-e6cc-4ff4-9acc-af148819b2aa.preview.emergentagent.com/`;
     await chrome.tabs.create({ url: authUrl });
     
     // Show notification

@@ -20,16 +20,23 @@ db_instance = Database()
 
 async def connect_to_mongo():
     """Create database connection"""
-    MONGO_URL = os.environ.get("MONGO_URL", "mongodb://localhost:27017")
-    db_instance.client = AsyncIOMotorClient(MONGO_URL)
-    db_instance.database = db_instance.client.aman_db
-    
-    # Test the connection
     try:
+        MONGO_URL = os.environ.get("MONGO_URL", "mongodb://localhost:27017")
+        db_instance.client = AsyncIOMotorClient(MONGO_URL)
+        db_instance.database = db_instance.client.aman_cybersecurity_db
+        
+        # Test the connection
         await db_instance.client.admin.command('ping')
         print("✅ MongoDB connection successful")
+        
+        # Ensure indexes are created
+        await init_collections()
+        
     except Exception as e:
         print(f"❌ MongoDB connection failed: {e}")
+        # Don't raise exception, allow graceful fallback
+        db_instance.client = None
+        db_instance.database = None
 
 async def close_mongo_connection():
     """Close database connection"""
@@ -39,57 +46,68 @@ async def close_mongo_connection():
 
 def get_database():
     """Get database instance"""
+    if db_instance.database is None:
+        print("⚠️ Database not connected")
+        return None
     return db_instance.database
 
 # Collections and indexes initialization
 async def init_collections():
     """Initialize database collections with proper indexes"""
-    db = get_database()
-    
-    # Users collection
-    await db.users.create_index("email", unique=True)
-    await db.users.create_index("organization")
-    await db.users.create_index("is_active")
-    await db.users.create_index("created_at")
-    
-    # Email scans collection
-    await db.email_scans.create_index("user_id")
-    await db.email_scans.create_index("scanned_at")
-    await db.email_scans.create_index("scan_result")
-    await db.email_scans.create_index([("user_id", 1), ("scanned_at", -1)])
-    await db.email_scans.create_index("sender")
-    
-    # Threat logs collection
-    await db.threat_logs.create_index("domain")
-    await db.threat_logs.create_index("detected_at")
-    await db.threat_logs.create_index("is_active")
-    await db.threat_logs.create_index("severity")
-    
-    # Organizations collection
-    await db.organizations.create_index("name", unique=True)
-    await db.organizations.create_index("domain")
-    await db.organizations.create_index("status")
-    
-    # Unblock requests collection
-    await db.unblock_requests.create_index("user_id")
-    await db.unblock_requests.create_index("status")
-    await db.unblock_requests.create_index("created_at")
-    
-    # Feedback collection
-    await db.feedback.create_index("user_id")
-    await db.feedback.create_index("scan_id")
-    await db.feedback.create_index("created_at")
-    
-    # Settings collection
-    await db.user_settings.create_index("user_id", unique=True)
-    await db.organization_settings.create_index("organization_id", unique=True)
-    
-    # Threat intelligence collection
-    await db.threat_domains.create_index("domain", unique=True)
-    await db.threat_domains.create_index("last_seen")
-    await db.threat_domains.create_index("risk_score")
-    
-    print("✅ Database collections initialized")
+    try:
+        db = get_database()
+        if not db:
+            print("⚠️ Database not available, skipping collection initialization")
+            return
+        
+        # Users collection
+        await db.users.create_index("email", unique=True)
+        await db.users.create_index("organization")
+        await db.users.create_index("is_active")
+        await db.users.create_index("created_at")
+        
+        # Email scans collection
+        await db.email_scans.create_index("user_id")
+        await db.email_scans.create_index("scanned_at")
+        await db.email_scans.create_index("scan_result")
+        await db.email_scans.create_index([("user_id", 1), ("scanned_at", -1)])
+        await db.email_scans.create_index("sender")
+        
+        # Threat logs collection
+        await db.threat_logs.create_index("domain")
+        await db.threat_logs.create_index("detected_at")
+        await db.threat_logs.create_index("is_active")
+        await db.threat_logs.create_index("severity")
+        
+        # Organizations collection
+        await db.organizations.create_index("name", unique=True)
+        await db.organizations.create_index("domain")
+        await db.organizations.create_index("status")
+        
+        # Unblock requests collection
+        await db.unblock_requests.create_index("user_id")
+        await db.unblock_requests.create_index("status")
+        await db.unblock_requests.create_index("created_at")
+        
+        # Feedback collection
+        await db.feedback.create_index("user_id")
+        await db.feedback.create_index("scan_id")
+        await db.feedback.create_index("created_at")
+        
+        # Settings collection
+        await db.user_settings.create_index("user_id", unique=True)
+        await db.organization_settings.create_index("organization_id", unique=True)
+        
+        # Threat intelligence collection
+        await db.threat_domains.create_index("domain", unique=True)
+        await db.threat_domains.create_index("last_seen")
+        await db.threat_domains.create_index("risk_score")
+        
+        print("✅ Database collections initialized")
+        
+    except Exception as e:
+        print(f"⚠️ Database collection initialization failed: {e}")
+        # Don't raise exception, allow graceful fallback
 
 # User database operations
 class UserDatabase:
