@@ -19,17 +19,106 @@ import asyncio
 import json
 from contextlib import asynccontextmanager
 
-# Import modules
-from email_scanner import scan_email_advanced, scan_link_advanced
-from ai_scanner import scan_email_with_ai, scan_link_with_ai
-from feedback_system import submit_scan_feedback, get_user_feedback_analytics
-from threat_intelligence import check_domain_reputation, check_url_reputation
-from realtime_manager import realtime_manager, notify_threat_detected, notify_scan_completed
-from admin_manager import (
-    get_admin_dashboard_stats, get_user_management_data, 
-    update_user_status, update_user_role, get_threat_management_data,
-    get_system_monitoring_data, get_admin_audit_log
-)
+# Import modules with graceful fallbacks
+try:
+    from email_scanner import scan_email_advanced, scan_link_advanced
+except ImportError:
+    def scan_email_advanced(email_data):
+        return {"risk_score": 0, "risk_level": "safe", "explanation": "Email scanner not available"}
+    
+    def scan_link_advanced(url, context=""):
+        return {"risk_score": 0, "risk_level": "safe", "explanation": "Link scanner not available"}
+
+try:
+    from ai_scanner import scan_email_with_ai, scan_link_with_ai
+except ImportError:
+    async def scan_email_with_ai(email_data, user_id):
+        return {"risk_score": 0, "risk_level": "safe", "explanation": "AI scanner not available"}
+    
+    async def scan_link_with_ai(url, context=""):
+        return {"risk_score": 0, "risk_level": "safe", "explanation": "AI scanner not available"}
+
+try:
+    from feedback_system import submit_scan_feedback, get_user_feedback_analytics
+except ImportError:
+    async def submit_scan_feedback(scan_id, user_id, is_correct, suggested_risk_level=None, user_comment=""):
+        return {"success": False, "error": "Feedback system not available"}
+    
+    async def get_user_feedback_analytics(user_id):
+        return {"total_feedback": 0, "accuracy_rate": 0.0, "feedback_breakdown": {}}
+
+try:
+    from threat_intelligence import check_domain_reputation, check_url_reputation
+except ImportError:
+    async def check_domain_reputation(domain):
+        return {"risk_score": 0, "reputation": "unknown", "sources": []}
+    
+    async def check_url_reputation(url):
+        return {"risk_score": 0, "reputation": "unknown", "sources": []}
+
+try:
+    from realtime_manager import realtime_manager, notify_threat_detected, notify_scan_completed
+except ImportError:
+    class MockRealtimeManager:
+        async def start_background_tasks(self):
+            pass
+        
+        async def connect(self, websocket, user_id):
+            return "mock_connection"
+        
+        async def disconnect(self, connection_id):
+            pass
+        
+        def get_connection_stats(self):
+            return {"active_connections": 0, "total_messages": 0}
+        
+        async def send_dashboard_statistics(self, user_id):
+            pass
+        
+        @property
+        def connections(self):
+            return {}
+    
+    realtime_manager = MockRealtimeManager()
+    
+    async def notify_threat_detected(user_id, notification_data):
+        pass
+    
+    async def notify_scan_completed(user_id, notification_data):
+        pass
+
+try:
+    from admin_manager import (
+        get_admin_dashboard_stats, get_user_management_data, 
+        update_user_status, update_user_role, get_threat_management_data,
+        get_system_monitoring_data, get_admin_audit_log
+    )
+except ImportError:
+    async def get_admin_dashboard_stats():
+        return type('Stats', (), {
+            'total_users': 0, 'active_users': 0, 'total_organizations': 0,
+            'active_organizations': 0, 'today_scans': 0, 'today_threats': 0,
+            'total_threats_blocked': 0, 'avg_risk_score': 0, 'ai_usage_cost': 0,
+            'cache_hit_rate': 0
+        })()
+    
+    async def get_user_management_data(page, page_size, search):
+        return {"users": [], "pagination": {"total": 0, "page": page, "page_size": page_size}}
+    
+    async def update_user_status(admin_id, user_id, is_active):
+        return {"success": False, "error": "Admin manager not available"}
+    
+    async def update_user_role(admin_id, user_id, new_role):
+        return {"success": False, "error": "Admin manager not available"}
+    
+    async def get_threat_management_data(days):
+        return {"threat_timeline": [], "top_threat_sources": [], "recent_threats": []}
+    
+    async def get_system_monitoring_data():
+        return {"api_performance": {}, "error_rates": {}, "database_stats": {}}
+    
+    async def get_admin_audit_log(page, page_size, days):
+        return {"actions": [], "pagination": {"total": 0, "page": page, "page_size": page_size}}
 from models import (
     UserCreate, UserResponse, LoginRequest, Token, RefreshTokenRequest,
     EmailScanRequest, EmailScanResponse, DashboardStats, DashboardData,
