@@ -1359,6 +1359,23 @@ async def get_admin_audit_logs(
             detail="Failed to fetch admin audit logs"
         )
 
+# Helper functions for safe AI scanning
+async def safe_scan_email_with_ai(email_data, user_id):
+    """Safe wrapper for AI email scanning with fallback"""
+    try:
+        return await scan_email_with_ai(email_data, user_id)
+    except Exception as e:
+        logger.warning(f"AI email scanning failed: {e}")
+        return scan_email_advanced(email_data)
+
+async def safe_scan_link_with_ai(url, context=""):
+    """Safe wrapper for AI link scanning with fallback"""
+    try:
+        return await scan_link_with_ai(url, context)
+    except Exception as e:
+        logger.warning(f"AI link scanning failed: {e}")
+        return scan_link_advanced(url, context)
+
 # Helper functions
 def _is_shortened_url(url: str) -> bool:
     """Check if URL is a shortened URL"""
