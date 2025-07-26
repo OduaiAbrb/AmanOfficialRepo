@@ -1,137 +1,137 @@
 {
-  "timestamp": "2025-07-26T09:30:07.388357",
+  "timestamp": "2025-07-26T09:31:42.513136",
   "backend_url": "http://localhost:8001/api",
   "results": [
     {
       "test": "Enhanced Health Check",
       "success": true,
       "details": "Status: healthy, DB: healthy, API: healthy",
-      "timestamp": "2025-07-26T09:29:51.485286"
+      "timestamp": "2025-07-26T09:31:33.746484"
     },
     {
       "test": "Database Connectivity and Collections",
       "success": true,
       "details": "Database healthy, using aman_cybersecurity database with proper collections",
-      "timestamp": "2025-07-26T09:29:51.488827"
+      "timestamp": "2025-07-26T09:31:33.749937"
     },
     {
       "test": "User Registration",
       "success": true,
-      "details": "User registered: testuser_1753522191@cybersec.com",
-      "timestamp": "2025-07-26T09:29:51.761112"
+      "details": "User registered: testuser_1753522293@cybersec.com",
+      "timestamp": "2025-07-26T09:31:34.015971"
     },
     {
       "test": "User Login",
       "success": true,
       "details": "Login successful, token type: bearer",
-      "timestamp": "2025-07-26T09:29:52.003095"
+      "timestamp": "2025-07-26T09:31:34.262896"
     },
     {
       "test": "Token Refresh",
       "success": true,
       "details": "Token refresh successful",
-      "timestamp": "2025-07-26T09:29:52.246300"
+      "timestamp": "2025-07-26T09:31:34.505096"
     },
     {
       "test": "Protected User Profile",
       "success": true,
-      "details": "User: Test User (testuser_1753522191@cybersec.com) - Role: user",
-      "timestamp": "2025-07-26T09:29:52.250883"
+      "details": "User: Test User (testuser_1753522293@cybersec.com) - Role: user",
+      "timestamp": "2025-07-26T09:31:34.509713"
     },
     {
       "test": "Protected Dashboard Stats",
-      "success": false,
-      "details": "HTTP 500: {\"detail\":\"Failed to fetch dashboard stats\"}",
-      "timestamp": "2025-07-26T09:29:52.254713"
+      "success": true,
+      "details": "Stats: Phishing=0, Safe=0, Potential=0, Accuracy=0.0%",
+      "timestamp": "2025-07-26T09:31:34.515470"
     },
     {
       "test": "Protected Recent Emails",
-      "success": false,
-      "details": "HTTP 500: {\"detail\":\"Failed to fetch recent emails\"}",
-      "timestamp": "2025-07-26T09:29:52.258551"
+      "success": true,
+      "details": "Empty email list returned (valid for new user)",
+      "timestamp": "2025-07-26T09:31:34.520401"
     },
     {
       "test": "Real Database Operations No Mock Data",
-      "success": false,
-      "details": "Mock data detected - Stats real: False, Emails real: False",
-      "timestamp": "2025-07-26T09:29:52.265829"
+      "success": true,
+      "details": "Real database data confirmed - Total scans: 0, Emails: 0",
+      "timestamp": "2025-07-26T09:31:34.530251"
     },
     {
       "test": "AI Integration Gemini Functionality",
       "success": false,
-      "details": "AI integration issues - Email AI: False, Link AI: False",
-      "timestamp": "2025-07-26T09:29:58.825447"
+      "details": "AI integration issues - Email AI: True, Link AI: False",
+      "timestamp": "2025-07-26T09:31:37.619797"
     },
     {
       "test": "Advanced Email Scanning",
-      "success": false,
-      "details": "HTTP 500: {\"detail\":\"Email scan failed\"}",
-      "timestamp": "2025-07-26T09:30:01.340943"
+      "success": true,
+      "details": "Phishing detected: Risk=95.0, Status=phishing, Threats=4, Sources=1",
+      "timestamp": "2025-07-26T09:31:37.634632"
     },
     {
       "test": "Enhanced Link Scanning",
       "success": true,
       "details": "Suspicious link detected: Risk=50.0, Status=potential_phishing, Categories=1",
-      "timestamp": "2025-07-26T09:30:04.425866"
+      "timestamp": "2025-07-26T09:31:41.141962"
     },
     {
       "test": "AI Cost Management Analytics Endpoints",
       "success": true,
       "details": "Analytics working, Limits working, Cache access control fixed: Correctly denied access (403) for non-admin user",
-      "timestamp": "2025-07-26T09:30:04.442600"
+      "timestamp": "2025-07-26T09:31:41.159844"
     },
     {
       "test": "Admin Panel Comprehensive",
       "success": true,
       "details": "All 5 admin endpoints properly deny regular user access (403)",
-      "timestamp": "2025-07-26T09:30:04.460483"
+      "timestamp": "2025-07-26T09:31:41.178223"
     },
     {
       "test": "WebSocket Connection Capability",
       "success": false,
       "details": "WebSocket stats endpoint access control issue: HTTP 500",
-      "timestamp": "2025-07-26T09:30:04.463923"
+      "timestamp": "2025-07-26T09:31:41.181699"
     },
     {
       "test": "Security Features Comprehensive",
       "success": true,
       "details": "Rate limiting, input validation, and JWT protection all working",
-      "timestamp": "2025-07-26T09:30:05.723442"
+      "timestamp": "2025-07-26T09:31:42.439914"
     },
     {
       "test": "User Settings",
       "success": true,
       "details": "Settings GET/PUT operations working correctly",
-      "timestamp": "2025-07-26T09:30:05.735747"
+      "timestamp": "2025-07-26T09:31:42.449457"
     },
     {
       "test": "Feedback Submission",
-      "success": false,
-      "details": "Could not perform initial scan for feedback test",
-      "timestamp": "2025-07-26T09:30:07.358844"
+      "success": true,
+      "details": "Feedback submitted successfully: 62f222b9-1b99-429b-acfb-92adf9cb5c64",
+      "timestamp": "2025-07-26T09:31:42.495883"
     },
     {
       "test": "Feedback Analytics",
       "success": true,
-      "details": "Analytics: Total=0, Accuracy=0%, Breakdown=0 types",
-      "timestamp": "2025-07-26T09:30:07.365942"
+      "details": "Analytics: Total=1, Accuracy=100.0%, Breakdown=1 types",
+      "timestamp": "2025-07-26T09:31:42.501297"
     },
     {
       "test": "Domain Threat Intelligence",
       "success": true,
       "details": "Domain analysis: secure-bank-update.com -> Risk=45.0, Level=potential_phishing, Category=suspicious, Sources=1",
-      "timestamp": "2025-07-26T09:30:07.381567"
+      "timestamp": "2025-07-26T09:31:42.507094"
     },
     {
       "test": "URL Threat Intelligence",
       "success": true,
       "details": "URL analysis: Risk=45.0, Level=potential_phishing, Category=suspicious, Sources=1",
-      "timestamp": "2025-07-26T09:30:07.387994"
+      "timestamp": "2025-07-26T09:31:42.512804"
     }
   ],
   "summary": {
     "total_tests": 21,
-    "passed": 14,
-    "failed": 7
+    "passed": 19,
+    "failed": 2
   }
 }
