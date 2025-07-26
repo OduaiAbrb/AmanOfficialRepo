@@ -157,7 +157,7 @@ function updateAuthUI(isAuthenticated, userEmail) {
 function handleLogin() {
     // Open login page
     chrome.tabs.create({ 
-        url: 'https://a7ef5366-e6cc-4ff4-9acc-af148819b2aa.preview.emergentagent.com/auth'
+        url: 'https://a7ef5366-e6cc-4ff4-9acc-af148819b2aa.preview.emergentagent.com/'
     });
 }
 
