@@ -1,43 +1,60 @@
-from motor.motor_asyncio import AsyncIOMotorClient
-from typing import Optional, List, Dict, Any
+"""
+Database connection module for Aman Cybersecurity Platform
+"""
 import os
-from dotenv import load_dotenv
+import logging
+from typing import Optional, List, Dict, Any
+from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
+from pymongo.errors import ConnectionFailure
 from datetime import datetime, timedelta
 import uuid
+from dotenv import load_dotenv
 from models import (
     UserInDB, EmailScanResult, ThreatLog, FeedbackResponse, 
     UnblockRequestResponse, OrganizationResponse, ScanStatus
 )
 
 load_dotenv()
+logger = logging.getLogger(__name__)
 
 class Database:
     client: Optional[AsyncIOMotorClient] = None
-    database = None
+    database: Optional[AsyncIOMotorDatabase] = None
 
 # Database instance
 db_instance = Database()
 
 async def connect_to_mongo():
     """Create database connection"""
-    MONGO_URL = os.environ.get("MONGO_URL", "mongodb://localhost:27017")
-    db_instance.client = AsyncIOMotorClient(MONGO_URL)
-    db_instance.database = db_instance.client.aman_db
-    
-    # Test the connection
     try:
+        mongo_url = os.getenv("MONGO_URL", "mongodb://localhost:27017")
+        
+        # Create client
+        db_instance.client = AsyncIOMotorClient(mongo_url)
+        
+        # Test connection
         await db_instance.client.admin.command('ping')
-        print("✅ MongoDB connection successful")
+        
+        # Set database
+        db_instance.database = db_instance.client.aman_cybersecurity
+        
+        logger.info(f"✅ Connected to MongoDB: {mongo_url}")
+        logger.info(f"✅ Using database: aman_cybersecurity")
+        
+    except ConnectionFailure as e:
+        logger.error(f"❌ Failed to connect to MongoDB: {e}")
+        raise
     except Exception as e:
-        print(f"❌ MongoDB connection failed: {e}")
+        logger.error(f"❌ Database connection error: {e}")
+        raise
 
 async def close_mongo_connection():
     """Close database connection"""
     if db_instance.client:
         db_instance.client.close()
-        print("MongoDB connection closed")
+        logger.info("Database connection closed")
 
-def get_database():
+def get_database() -> Optional[AsyncIOMotorDatabase]:
     """Get database instance"""
     return db_instance.database
 
