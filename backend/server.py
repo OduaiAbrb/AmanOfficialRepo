@@ -213,8 +213,11 @@ async def health_check(request: Request):
     try:
         # Check database connectivity
         db = get_database()
-        await db.command('ping')
-        db_status = "healthy"
+        if db:
+            await db.command('ping')
+            db_status = "healthy"
+        else:
+            db_status = "unhealthy"
     except Exception as e:
         logger.error(f"Database health check failed: {e}")
         db_status = "unhealthy"
@@ -226,7 +229,8 @@ async def health_check(request: Request):
         timestamp=datetime.utcnow(),
         checks={
             "database": db_status,
-            "api": "healthy"
+            "api": "healthy",
+            "websocket": "healthy"
         }
     )
 
