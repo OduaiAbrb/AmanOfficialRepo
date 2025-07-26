@@ -529,15 +529,16 @@ async def scan_email_with_ai(email_data: Dict[str, Any], user_id: str = None) ->
     """
     return await ai_enhanced_scanner.scan_email_with_ai(email_data, user_id or "anonymous")
 
-async def scan_link_with_ai(url: str, context: str = "") -> Dict[str, Any]:
+async def scan_link_with_ai(url: str, context: str = "", user_id: str = "anonymous") -> Dict[str, Any]:
     """
     AI-enhanced link scanning function for API integration
     
     Args:
         url: URL to analyze
         context: Optional context
+        user_id: User ID for cost tracking
         
     Returns:
         Enhanced link analysis with AI
     """
-    return await ai_enhanced_scanner.scan_link_with_ai(url, context)
+    return await ai_enhanced_scanner.scan_link_with_ai(url, context, user_id)
