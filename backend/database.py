@@ -20,16 +20,23 @@ db_instance = Database()
 
 async def connect_to_mongo():
     """Create database connection"""
-    MONGO_URL = os.environ.get("MONGO_URL", "mongodb://localhost:27017")
-    db_instance.client = AsyncIOMotorClient(MONGO_URL)
-    db_instance.database = db_instance.client.aman_db
-    
-    # Test the connection
     try:
+        MONGO_URL = os.environ.get("MONGO_URL", "mongodb://localhost:27017")
+        db_instance.client = AsyncIOMotorClient(MONGO_URL)
+        db_instance.database = db_instance.client.aman_cybersecurity_db
+        
+        # Test the connection
         await db_instance.client.admin.command('ping')
         print("✅ MongoDB connection successful")
+        
+        # Ensure indexes are created
+        await init_collections()
+        
     except Exception as e:
         print(f"❌ MongoDB connection failed: {e}")
+        # Don't raise exception, allow graceful fallback
+        db_instance.client = None
+        db_instance.database = None
 
 async def close_mongo_connection():
     """Close database connection"""
