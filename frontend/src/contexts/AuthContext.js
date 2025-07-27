@@ -316,8 +316,7 @@ export const AuthProvider = ({ children }) => {
 
   const value = {
     user,
-    isAuthenticated,
-    isLoading,
+    loading,
     authToken,
     login,
     register,
@@ -325,7 +324,8 @@ export const AuthProvider = ({ children }) => {
     updateProfile,
     getUserSettings,
     updateUserSettings,
-    refreshAuthToken
+    refreshAuthToken,
+    isAuthenticated: !!user && !!authToken
   };
 
   return (
