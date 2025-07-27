@@ -388,9 +388,9 @@ async def get_dashboard_stats(
         accuracy_rate = 95.5 if total_scans > 0 else 0.0
         
         return DashboardStats(
-            phishing_caught=stats_data.get("phishing_caught", 0),
+            phishing_caught=stats_data.get("threats_blocked", 0),
             safe_emails=stats_data.get("safe_emails", 0),
-            potential_phishing=stats_data.get("potential_phishing", 0),
+            potential_phishing=max(0, total_scans - stats_data.get("threats_blocked", 0) - stats_data.get("safe_emails", 0)),
             total_scans=total_scans,
             accuracy_rate=accuracy_rate,
             last_updated=datetime.utcnow()
