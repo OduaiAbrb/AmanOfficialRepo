@@ -42,6 +42,41 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
+  // Update axios defaults when token changes
+  useEffect(() => {
+    if (authToken) {
+      axios.defaults.headers.common['Authorization'] = `Bearer ${authToken}`;
+    } else {
+      delete axios.defaults.headers.common['Authorization'];
+    }
+  }, [authToken]);
+
+  // Set up axios interceptor for automatic token refresh
+  useEffect(() => {
+    const interceptor = axios.interceptors.response.use(
+      (response) => response,
+      async (error) => {
+        const originalRequest = error.config;
+        
+        if (error.response?.status === 401 && !originalRequest._retry) {
+          originalRequest._retry = true;
+          
+          const refreshed = await refreshAuthToken();
+          if (refreshed) {
+            // Retry the original request with new token
+            return axios(originalRequest);
+          }
+        }
+        
+        return Promise.reject(error);
+      }
+    );
+
+    return () => {
+      axios.interceptors.response.eject(interceptor);
+    };
+  }, []);
+
   // Verify token validity
   const verifyToken = async (token) => {
     try {
@@ -240,20 +275,18 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (error) {
       console.error('Profile update error:', error);
-      return { 
-        success: false, 
-        error: (() => {
-          const detail = error.response?.data?.detail;
-          if (typeof detail === 'string') {
-            return detail;
-          } else if (Array.isArray(detail)) {
-            return detail.map(err => err.msg || err.type || 'Validation error').join(', ');
-          } else if (typeof detail === 'object' && detail) {
-            return detail.msg || detail.type || 'Profile update failed';
-          }
-          return 'Profile update failed';
-        })()
-      };
+      const detail = error.response?.data?.detail;
+      let errorMessage = 'Profile update failed';
+      
+      if (typeof detail === 'string') {
+        errorMessage = detail;
+      } else if (Array.isArray(detail)) {
+        errorMessage = detail.map(err => err.msg || err.type || 'Validation error').join(', ');
+      } else if (typeof detail === 'object' && detail) {
+        errorMessage = detail.msg || detail.type || 'Profile update failed';
+      }
+      
+      return { success: false, error: errorMessage };
     }
   };
 
@@ -285,41 +318,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Set up axios interceptor for automatic token refresh
-  useEffect(() => {
-    const interceptor = axios.interceptors.response.use(
-      (response) => response,
-      async (error) => {
-        const originalRequest = error.config;
-        
-        if (error.response?.status === 401 && !originalRequest._retry) {
-          originalRequest._retry = true;
-          
-          const refreshed = await refreshAuthToken();
-          if (refreshed) {
-            // Retry the original request with new token
-            return axios(originalRequest);
-          }
-        }
-        
-        return Promise.reject(error);
-      }
-    );
-
-    return () => {
-      axios.interceptors.response.eject(interceptor);
-    };
-
-  // Update axios defaults when token changes
-  useEffect(() => {
-    if (authToken) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${authToken}`;
-    } else {
-      delete axios.defaults.headers.common['Authorization'];
-    }
-  }, [authToken]);
-
-  const value = {
+  const contextValue = {
     user,
     loading,
     authToken,
@@ -333,166 +332,9 @@ export const AuthProvider = ({ children }) => {
     isAuthenticated: !!user && !!authToken
   };
 
-    const refreshToken = async () => {
-        try {
-            const storedRefreshToken = localStorage.getItem('refreshToken');
-            if (!storedRefreshToken) throw new Error('No refresh token available');
-
-            const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {
-                refresh_token: storedRefreshToken,
-            });
-
-            if (response.data.access_token) {
-                localStorage.setItem('authToken', response.data.access_token);
-                setAuthToken(response.data.access_token);
-                axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.access_token}`;
-                return response.data.access_token;
-            }
-        } catch (error) {
-            console.error('❌ Token refresh failed:', error);
-            logout();
-            return null;
-        }
-    };
-
-    const getCurrentUser = async () => {
-        try {
-            const response = await axios.get(`${API_BASE_URL}/user/profile`);
-            return response.data;
-        } catch (error) {
-            if (error.response?.status === 401) {
-                const newToken = await refreshToken();
-                if (newToken) {
-                    try {
-                        const retry = await axios.get(`${API_BASE_URL}/user/profile`);
-                        return retry.data;
-                    } catch (err) {
-                        logout();
-                        return null;
-                    }
-                } else {
-                    logout();
-                    return null;
-                }
-            }
-            return null;
-        }
-    };
-
-    const login = async (email, password) => {
-        try {
-            const response = await axios.post(`${API_BASE_URL}/auth/login`, { email, password });
-
-            if (response.data.success) {
-                const { access_token, refresh_token, user: userData } = response.data;
-                localStorage.setItem('authToken', access_token);
-                localStorage.setItem('refreshToken', refresh_token);
-                localStorage.setItem('user', JSON.stringify(userData));
-
-                setAuthToken(access_token);
-                setUser(userData);
-
-                axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
-
-                sendAuthToExtension({ token: access_token, email: userData.email, name: userData.name });
-
-                return { success: true, user: userData };
-            }
-        } catch (error) {
-            const message = error.response?.data?.detail || 'Login failed. Please try again.';
-            return { success: false, error: message };
-        }
-    };
-
-    const register = async (name, email, password, organization) => {
-        try {
-            const response = await axios.post(`${API_BASE_URL}/auth/register`, {
-                name, email, password, organization,
-            });
-
-            if (response.status === 200 && response.data.success) {
-                return await login(email, password);
-            }
-        } catch (error) {
-            const detail = error.response?.data?.detail;
-            let errorMessage = 'Registration failed. Please try again.';
-            if (typeof detail === 'string') errorMessage = detail;
-            else if (Array.isArray(detail)) errorMessage = detail.map(e => e.msg).join(', ');
-            else if (typeof detail === 'object') errorMessage = detail?.msg || detail?.type;
-            return { success: false, error: errorMessage };
-        }
-    };
-
-    // Check authentication status on mount
-    useEffect(() => {
-        const checkAuthStatus = async () => {
-            const token = localStorage.getItem('authToken');
-            const storedUser = localStorage.getItem('user');
-
-            if (token && storedUser) {
-                try {
-                    setAuthToken(token);
-                    const userData = JSON.parse(storedUser);
-                    setUser(userData);
-                    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-                    const verifiedUser = await getCurrentUser();
-                    if (verifiedUser) {
-                        setUser(verifiedUser);
-                        sendAuthToExtension({
-                            token: token,
-                            email: verifiedUser.email,
-                            name: verifiedUser.name
-                        });
-                    } else {
-                        logout();
-                    }
-                } catch (error) {
-                    logout();
-                }
-            }
-            setLoading(false);
-        };
-
-        checkAuthStatus();
-    }, []);
-
-    // Axios response interceptor to refresh tokens automatically
-    useEffect(() => {
-        const interceptor = axios.interceptors.response.use(
-            (response) => response,
-            async (error) => {
-                if (error.response?.status === 401 && authToken) {
-                    const newToken = await refreshToken();
-                    if (newToken) {
-                        error.config.headers['Authorization'] = `Bearer ${newToken}`;
-                        return axios.request(error.config);
-                    }
-                }
-                return Promise.reject(error);
-            }
-        );
-        return () => {
-            axios.interceptors.response.eject(interceptor);
-        };
-    }, [authToken]);
-
-    const value = {
-        user,
-        authToken,
-        loading,
-        login,
-        register,
-        logout,
-        refreshToken,
-        getCurrentUser,
-        isAuthenticated: !!user && !!authToken,
-    };
-
-    return (
-        <AuthContext.Provider value={value}>
-            {children}
-        </AuthContext.Provider>
-    );
+  return (
+    <AuthContext.Provider value={contextValue}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
-
-export default AuthContext;
