@@ -136,7 +136,7 @@ export const AuthProvider = ({ children }) => {
     try {
       setLoading(true);
       
-      const response = await axios.post(`${backendUrl}/api/auth/register`, {
+      const response = await axios.post(`${backendUrl}/auth/register`, {
         name,
         email,
         password,
