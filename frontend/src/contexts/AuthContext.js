@@ -311,6 +311,15 @@ export const AuthProvider = ({ children }) => {
     };
   }, []);
 
+  // Update axios defaults when token changes
+  useEffect(() => {
+    if (authToken) {
+      axios.defaults.headers.common['Authorization'] = `Bearer ${authToken}`;
+    } else {
+      delete axios.defaults.headers.common['Authorization'];
+    }
+  }, [authToken]);
+
   const value = {
     user,
     loading,
