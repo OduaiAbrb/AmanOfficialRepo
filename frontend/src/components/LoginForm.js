@@ -48,7 +48,7 @@ const LoginForm = ({ onLogin, onSwitchToRegister, isLoading, error }) => {
                     <span className="text-red-400">⚠️</span>
                   </div>
                   <div className="ml-3">
-                    <p className="text-sm text-red-600">{error}</p>
+                    <p className="text-sm text-red-600">{typeof error === 'string' ? error : 'Login failed. Please try again.'}</p>
                   </div>
                 </div>
               </div>
