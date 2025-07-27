@@ -28,7 +28,6 @@ export const AuthProvider = ({ children }) => {
         const parsedUser = JSON.parse(userData);
         setAuthToken(token);
         setUser(parsedUser);
-        setIsAuthenticated(true);
         
         // Set default axios header
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
