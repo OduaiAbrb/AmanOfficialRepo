@@ -170,7 +170,7 @@ export const AuthProvider = ({ children }) => {
       
       return { success: false, error: errorMessage };
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
