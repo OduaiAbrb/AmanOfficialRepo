@@ -189,7 +189,7 @@ const Dashboard = () => {
               <span className="text-4xl">⚠️</span>
             </div>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">Error Loading Data</h2>
-            <p className="text-gray-600 mb-6">{error}</p>
+            <p className="text-gray-600 mb-6">{typeof error === 'string' ? error : 'Failed to load dashboard data. Please try again.'}</p>
             <button 
               onClick={fetchDashboardData}
               className="btn-primary"
