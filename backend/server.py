@@ -155,27 +155,25 @@ async def health():
 async def register(user_data: UserCreate):
     try:
         # Check if user exists
-        existing_user = await UserDatabase.get_user_by_email(user_data.email)
-        if existing_user:
-            raise HTTPException(status_code=400, detail="User already exists")
-        
-        # Hash password
-        hashed_password = get_password_hash(user_data.password)
+        existing = await UserDatabase.get_user_by_email(user_data.email)
+        if existing:
+            raise HTTPException(status_code=400, detail="Email already registered")
         
         # Create user
         user_dict = {
             "id": str(uuid.uuid4()),
             "name": user_data.name,
             "email": user_data.email,
-            "password": hashed_password,
-            "organization": user_data.organization,
+            "password": get_password_hash(user_data.password),
+            "organization": user_data.organization or "",
+            "role": "user",
             "is_active": True,
             "created_at": datetime.utcnow()
         }
         
         await UserDatabase.create_user(user_dict)
+        return {"success": True, "message": "User registered successfully"}
         
-        return {"message": "User registered successfully", "user_id": user_dict["id"]}
     except HTTPException:
         raise
     except Exception as e:
@@ -191,14 +189,23 @@ async def login(login_data: UserLogin):
             raise HTTPException(status_code=401, detail="Invalid credentials")
         
         # Create tokens
-        access_token = create_access_token({"email": user["email"], "user_id": user["id"]})
-        refresh_token = create_refresh_token({"email": user["email"], "user_id": user["id"]})
+        access_token = create_access_token(data={"sub": user["id"], "email": user["email"]})
+        refresh_token = create_refresh_token(data={"sub": user["id"], "email": user["email"]})
         
         return {
+            "success": True,
             "access_token": access_token,
             "refresh_token": refresh_token,
-            "token_type": "bearer"
+            "token_type": "bearer",
+            "user": {
+                "id": user["id"],
+                "name": user["name"],
+                "email": user["email"],
+                "organization": user.get("organization", ""),
+                "role": user.get("role", "user")
+            }
         }
+        
     except HTTPException:
         raise
     except Exception as e:
@@ -206,20 +213,26 @@ async def login(login_data: UserLogin):
         raise HTTPException(status_code=500, detail="Login failed")
 
 @app.post("/api/auth/refresh")
-async def refresh_token_endpoint(token_data: TokenRefresh):
+async def refresh_token_endpoint(refresh_data: TokenRefresh):
     try:
-        # Verify refresh token
-        payload = verify_token(token_data.refresh_token, "refresh")
+        from auth import decode_refresh_token
+        
+        payload = decode_refresh_token(refresh_data.refresh_token)
         if not payload:
             raise HTTPException(status_code=401, detail="Invalid refresh token")
         
-        # Create new access token
-        access_token = create_access_token({"email": payload["email"], "user_id": payload["user_id"]})
+        user = await UserDatabase.get_user_by_id(payload["sub"])
+        if not user:
+            raise HTTPException(status_code=401, detail="User not found")
+        
+        access_token = create_access_token(data={"sub": user["id"], "email": user["email"]})
         
         return {
+            "success": True,
             "access_token": access_token,
             "token_type": "bearer"
         }
+        
     except HTTPException:
         raise
     except Exception as e:
