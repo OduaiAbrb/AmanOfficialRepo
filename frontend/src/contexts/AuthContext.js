@@ -88,7 +88,6 @@ export const AuthProvider = ({ children }) => {
         // Update state
         setAuthToken(access_token);
         setUser(userData);
-        setIsAuthenticated(true);
         
         // Store user data
         localStorage.setItem('userData', JSON.stringify(userData));
