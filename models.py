@@ -33,6 +33,14 @@ class UserCreate(BaseModel):
     def validate_password(cls, v):
         if len(v) < 8:
             raise ValueError('Password must be at least 8 characters long')
+        if not any(c.isupper() for c in v):
+            raise ValueError('Password must contain at least one uppercase letter')
+        if not any(c.islower() for c in v):
+            raise ValueError('Password must contain at least one lowercase letter')
+        if not any(c.isdigit() for c in v):
+            raise ValueError('Password must contain at least one digit')
+        if not any(c in '!@#$%^&*(),.?":{}|<>' for c in v):
+            raise ValueError('Password must contain at least one special character')
         return v
 
 class UserLogin(BaseModel):
@@ -129,6 +137,59 @@ class FeedbackSubmission(BaseModel):
         if not 1 <= v <= 5:
             raise ValueError('Rating must be between 1 and 5')
         return v
+
+# Admin Models
+class AdminDashboardStats(BaseModel):
+    total_users: int
+    active_users: int
+    total_organizations: int
+    active_organizations: int
+    today_scans: int
+    today_threats: int
+    total_threats_blocked: int
+    avg_risk_score: float
+    ai_usage_cost: float
+    cache_hit_rate: float
+
+class UserManagementData(BaseModel):
+    users: List[Dict[str, Any]]
+    total_count: int
+    page: int
+    per_page: int
+
+class ThreatManagementData(BaseModel):
+    threat_timeline: List[Dict[str, Any]]
+    top_threat_sources: List[Dict[str, Any]]
+    recent_threats: List[Dict[str, Any]]
+    analysis_period: str
+
+# AI Cost Models
+class AICostUsage(BaseModel):
+    total_requests: int
+    total_cost: float
+    total_tokens: int
+    period_start: datetime
+    period_end: datetime
+
+class AICacheStats(BaseModel):
+    hit_rate: float
+    total_requests: int
+    cache_hits: int
+    cache_misses: int
+
+# WebSocket Models
+class WebSocketMessage(BaseModel):
+    type: str
+    data: Optional[Dict[str, Any]] = None
+    timestamp: Optional[datetime] = None
+
+class NotificationData(BaseModel):
+    id: str
+    type: str
+    title: str
+    message: str
+    severity: str
+    timestamp: datetime
 
 # Response Models
 class APIResponse(BaseModel):

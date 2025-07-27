@@ -1,9 +1,9 @@
 """
 Aman Cybersecurity Platform - Secure Backend API
-Comprehensive FastAPI backend with JWT authentication, security middleware, AI integration, and real-time updates
+Comprehensive FastAPI backend with JWT authentication, security middleware, and real database operations
 """
 
-from fastapi import FastAPI, HTTPException, Depends, Request, BackgroundTasks, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, Depends, status, Request, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from slowapi import Limiter
@@ -15,111 +15,12 @@ from dotenv import load_dotenv
 from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any
 import logging
-import asyncio
-import json
-from contextlib import asynccontextmanager
 
-
-# Import modules with graceful fallbacks
-try:
-    from email_scanner import scan_email_advanced, scan_link_advanced
-except ImportError:
-    def scan_email_advanced(email_data):
-        return {"risk_score": 0, "risk_level": "safe", "explanation": "Email scanner not available"}
-    
-    def scan_link_advanced(url, context=""):
-        return {"risk_score": 0, "risk_level": "safe", "explanation": "Link scanner not available"}
-
-try:
-    from ai_scanner import scan_email_with_ai, scan_link_with_ai
-except ImportError:
-    async def scan_email_with_ai(email_data, user_id):
-        return {"risk_score": 0, "risk_level": "safe", "explanation": "AI scanner not available"}
-    
-    async def scan_link_with_ai(url, context=""):
-        return {"risk_score": 0, "risk_level": "safe", "explanation": "AI scanner not available"}
-
-try:
-    from feedback_system import submit_scan_feedback, get_user_feedback_analytics
-except ImportError:
-    async def submit_scan_feedback(scan_id, user_id, is_correct, suggested_risk_level=None, user_comment=""):
-        return {"success": False, "error": "Feedback system not available"}
-    
-    async def get_user_feedback_analytics(user_id):
-        return {"total_feedback": 0, "accuracy_rate": 0.0, "feedback_breakdown": {}}
-
-try:
-    from threat_intelligence import check_domain_reputation, check_url_reputation
-except ImportError:
-    async def check_domain_reputation(domain):
-        return {"risk_score": 0, "reputation": "unknown", "sources": []}
-    
-    async def check_url_reputation(url):
-        return {"risk_score": 0, "reputation": "unknown", "sources": []}
-
-try:
-    from realtime_manager import realtime_manager, notify_threat_detected, notify_scan_completed
-except ImportError:
-    class MockRealtimeManager:
-        async def start_background_tasks(self):
-            pass
-        
-        async def connect(self, websocket, user_id):
-            return "mock_connection"
-        
-        async def disconnect(self, connection_id):
-            pass
-        
-        def get_connection_stats(self):
-            return {"active_connections": 0, "total_messages": 0}
-        
-        async def send_dashboard_statistics(self, user_id):
-            pass
-        
-        @property
-        def connections(self):
-            return {}
-    
-    realtime_manager = MockRealtimeManager()
-    
-    async def notify_threat_detected(user_id, notification_data):
-        pass
-    
-    async def notify_scan_completed(user_id, notification_data):
-        pass
-
-try:
-    from admin_manager import (
-        get_admin_dashboard_stats, get_user_management_data, 
-        update_user_status, update_user_role, get_threat_management_data,
-        get_system_monitoring_data, get_admin_audit_log
-    )
-except ImportError:
-    async def get_admin_dashboard_stats():
-        return type('Stats', (), {
-            'total_users': 0, 'active_users': 0, 'total_organizations': 0,
-            'active_organizations': 0, 'today_scans': 0, 'today_threats': 0,
-            'total_threats_blocked': 0, 'avg_risk_score': 0, 'ai_usage_cost': 0,
-            'cache_hit_rate': 0
-        })()
-    
-    async def get_user_management_data(page, page_size, search):
-        return {"users": [], "pagination": {"total": 0, "page": page, "page_size": page_size}}
-    
-    async def update_user_status(admin_id, user_id, is_active):
-        return {"success": False, "error": "Admin manager not available"}
-    
-    async def update_user_role(admin_id, user_id, new_role):
-        return {"success": False, "error": "Admin manager not available"}
-    
-    async def get_threat_management_data(days):
-        return {"threat_timeline": [], "top_threat_sources": [], "recent_threats": []}
-    
-    async def get_system_monitoring_data():
-        return {"api_performance": {}, "error_rates": {}, "database_stats": {}}
-    
-    async def get_admin_audit_log(page, page_size, days):
-        return {"actions": [], "pagination": {"total": 0, "page": page, "page_size": page_size}}
+# Import advanced modules and AI scanner
+from email_scanner import scan_email_advanced, scan_link_advanced
+from ai_scanner import scan_email_with_ai, scan_link_with_ai
+from feedback_system import submit_scan_feedback, get_user_feedback_analytics
+from threat_intelligence import check_domain_reputation, check_url_reputation
 from models import (
     UserCreate, UserResponse, LoginRequest, Token, RefreshTokenRequest,
     EmailScanRequest, EmailScanResponse, DashboardStats, DashboardData,
@@ -128,16 +29,15 @@ from models import (
     LinkScanRequest, LinkScanResponse, UserUpdate, UserSettings, ScanStatus
 )
 from auth import (
-    get_current_active_user, create_access_token, create_refresh_token,
-    authenticate_user, create_user, create_token_response,
+    authenticate_user, create_user, get_current_active_user, create_token_response,
     verify_token, get_user_by_id, update_user_last_login
 )
 from security import (
-    SecurityMiddleware, IPValidator, InputValidator, log_security_event, validate_input,
-    limiter, auth_rate_limiter
+    limiter, SecurityMiddleware, validate_input, log_security_event,
+    auth_rate_limiter, IPValidator
 )
 from database import (
-    get_database, connect_to_mongo, close_mongo_connection, init_collections,
+    connect_to_mongo, close_mongo_connection, init_collections,
     UserDatabase, EmailScanDatabase, ThreatDatabase, FeedbackDatabase,
     SettingsDatabase
 )
@@ -152,28 +52,13 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Lifespan context manager for startup and shutdown
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Startup
-    await connect_to_mongo()
-    await realtime_manager.start_background_tasks()
-    logger.info("Application startup completed with real-time features")
-    
-    yield
-    
-    # Shutdown
-    await close_mongo_connection()
-    logger.info("Application shutdown completed")
-
-# Initialize FastAPI app with lifespan management
+# Initialize FastAPI app
 app = FastAPI(
-    title="Aman Cybersecurity Platform API",
-    description="AI-powered cybersecurity platform with real-time threat detection and management",
-    version="2.0.0",
+    title="Aman Cybersecurity Platform",
+    description="Advanced cybersecurity platform with AI-powered phishing detection",
+    version="1.0.0",
     docs_url="/docs" if os.getenv("ENVIRONMENT") == "development" else None,
-    redoc_url="/redoc" if os.getenv("ENVIRONMENT") == "development" else None,
-    lifespan=lifespan
+    redoc_url="/redoc" if os.getenv("ENVIRONMENT") == "development" else None
 )
 
 # Add rate limiting
@@ -205,6 +90,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Startup and shutdown events
+@app.on_event("startup")
+async def startup_event():
+    """Initialize database and other startup tasks"""
+    logger.info("Starting Aman Cybersecurity Platform...")
+    await connect_to_mongo()
+    await init_collections()
+    logger.info("✅ Startup completed successfully")
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Cleanup on shutdown"""
+    logger.info("Shutting down Aman Cybersecurity Platform...")
+    await close_mongo_connection()
+    logger.info("✅ Shutdown completed")
 
 # Health check endpoint
 @app.get("/api/health", response_model=HealthResponse)
@@ -213,12 +113,10 @@ async def health_check(request: Request):
     """Health check endpoint with system status"""
     try:
         # Check database connectivity
+        from database import get_database
         db = get_database()
-        if db is not None:
-            await db.command('ping')
-            db_status = "healthy"
-        else:
-            db_status = "unhealthy"
+        await db.command('ping')
+        db_status = "healthy"
     except Exception as e:
         logger.error(f"Database health check failed: {e}")
         db_status = "unhealthy"
@@ -230,8 +128,7 @@ async def health_check(request: Request):
         timestamp=datetime.utcnow(),
         checks={
             "database": db_status,
-            "api": "healthy",
-            "websocket": "healthy"
+            "api": "healthy"
         }
     )
 
@@ -246,7 +143,7 @@ async def register_user(request: Request, user_data: UserCreate):
         # Rate limiting for registration
         if not auth_rate_limiter.check_rate_limit(f"register_{client_ip}", max_attempts=3):
             raise HTTPException(
-                status_code=429,
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
                 detail="Too many registration attempts. Please try again later."
             )
         
@@ -269,7 +166,7 @@ async def register_user(request: Request, user_data: UserCreate):
     except Exception as e:
         logger.error(f"User registration error: {e}")
         raise HTTPException(
-            status_code=500,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Registration failed"
         )
 
@@ -285,7 +182,7 @@ async def login_user(request: Request, login_data: LoginRequest):
         if not auth_rate_limiter.check_rate_limit(identifier, max_attempts=5):
             log_security_event("AUTH_RATE_LIMIT", {"email": login_data.email}, client_ip)
             raise HTTPException(
-                status_code=429,
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
                 detail="Too many login attempts. Please try again later."
             )
         
@@ -293,7 +190,7 @@ async def login_user(request: Request, login_data: LoginRequest):
         if auth_rate_limiter.is_temporarily_blocked(identifier):
             log_security_event("AUTH_BLOCKED", {"email": login_data.email}, client_ip)
             raise HTTPException(
-                status_code=423,
+                status_code=status.HTTP_423_LOCKED,
                 detail="Account temporarily locked due to failed attempts"
             )
         
@@ -304,7 +201,7 @@ async def login_user(request: Request, login_data: LoginRequest):
             auth_rate_limiter.record_failed_attempt(identifier)
             log_security_event("AUTH_FAILED", {"email": login_data.email}, client_ip)
             raise HTTPException(
-                status_code=401,
+                status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Incorrect email or password"
             )
         
@@ -326,7 +223,7 @@ async def login_user(request: Request, login_data: LoginRequest):
     except Exception as e:
         logger.error(f"Login error: {e}")
         raise HTTPException(
-            status_code=500,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Login failed"
         )
 
@@ -340,7 +237,7 @@ async def refresh_token(request: Request, refresh_data: RefreshTokenRequest):
         
         if not token_data:
             raise HTTPException(
-                status_code=401,
+                status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid refresh token"
             )
         
@@ -348,7 +245,7 @@ async def refresh_token(request: Request, refresh_data: RefreshTokenRequest):
         user = await get_user_by_id(token_data.user_id)
         if not user or not user.is_active:
             raise HTTPException(
-                status_code=401,
+                status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="User not found or inactive"
             )
         
@@ -362,7 +259,7 @@ async def refresh_token(request: Request, refresh_data: RefreshTokenRequest):
     except Exception as e:
         logger.error(f"Token refresh error: {e}")
         raise HTTPException(
-            status_code=500,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Token refresh failed"
         )
 
@@ -402,7 +299,7 @@ async def update_user_profile(
         
         if not success:
             raise HTTPException(
-                status_code=400,
+                status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Failed to update profile"
             )
         
@@ -415,7 +312,7 @@ async def update_user_profile(
     except Exception as e:
         logger.error(f"Profile update error: {e}")
         raise HTTPException(
-            status_code=500,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Profile update failed"
         )
 
@@ -446,7 +343,7 @@ async def get_dashboard_stats(
     except Exception as e:
         logger.error(f"Dashboard stats error: {e}")
         raise HTTPException(
-            status_code=500,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to fetch dashboard stats"
         )
 
@@ -493,7 +390,7 @@ async def get_recent_emails(
     except Exception as e:
         logger.error(f"Recent emails error: {e}")
         raise HTTPException(
-            status_code=500,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to fetch recent emails"
         )
 
@@ -516,7 +413,7 @@ async def scan_email(
         email_body = validated_data.get("email_body", "")
         if len(email_body) > 50000:  # 50KB limit
             raise HTTPException(
-                status_code=400,
+                status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Email content too large"
             )
         
@@ -528,8 +425,12 @@ async def scan_email(
         }, client_ip)
         
         # Use AI-enhanced scanning with fallback
-        scan_results = await safe_scan_email_with_ai(validated_data, current_user.id)
-        logger.info(f"AI email scan completed for user {current_user.email}")
+        try:
+            scan_results = await scan_email_with_ai(validated_data)
+            logger.info(f"AI email scan successful for user {current_user.email}")
+        except Exception as ai_error:
+            logger.warning(f"AI scanning failed, falling back to advanced scanning: {ai_error}")
+            scan_results = scan_email_advanced(validated_data)
         
         risk_score = scan_results.get('risk_score', 0.0)
         risk_level = scan_results.get('risk_level', 'safe')
@@ -576,30 +477,6 @@ async def scan_email(
         
         scan_result = await EmailScanDatabase.create_email_scan(scan_data)
         
-        # Send real-time notifications
-        try:
-            # Convert scan result to notification format
-            notification_data = {
-                "id": scan_result.id,
-                "status": status.value,
-                "risk_score": risk_score,
-                "explanation": explanation,
-                "threat_sources": threat_sources,
-                "detected_threats": detected_threats,
-                "recommendations": recommendations
-            }
-            
-            # Send threat notification if dangerous
-            if status in [ScanStatus.POTENTIAL_PHISHING, ScanStatus.PHISHING]:
-                await notify_threat_detected(current_user.id, notification_data)
-            
-            # Send scan completion notification
-            await notify_scan_completed(current_user.id, notification_data)
-            
-        except Exception as notification_error:
-            # Don't fail the scan if notifications fail
-            logger.warning(f"Real-time notification failed: {notification_error}")
-        
         # Enhanced security logging
         log_security_event("EMAIL_SCAN_COMPLETED", {
             "scan_id": scan_result.id,
@@ -645,7 +522,7 @@ async def scan_link(
         # Enhanced security: Validate URL format and length
         if not link_request.url or len(link_request.url) > 2000:
             raise HTTPException(
-                status_code=400,
+                status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Invalid or too long URL"
             )
         
@@ -653,7 +530,7 @@ async def scan_link(
         from security import InputValidator
         if not InputValidator.validate_url(link_request.url):
             raise HTTPException(
-                status_code=400,
+                status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Invalid URL format"
             )
         
@@ -664,12 +541,10 @@ async def scan_link(
             "url_length": len(link_request.url)
         }, client_ip)
         
-
-
         # Use AI-enhanced link scanning with fallback
         try:
             context = getattr(link_request, 'context', '')
-            scan_results = await scan_link_with_ai(link_request.url, context, current_user.id)
+            scan_results = await scan_link_with_ai(link_request.url, context)
             logger.info(f"AI link scan successful for user {current_user.email}")
         except Exception as ai_error:
             logger.warning(f"AI link scanning failed, falling back to advanced scanning: {ai_error}")
@@ -747,7 +622,7 @@ async def get_user_settings(
     except Exception as e:
         logger.error(f"Get settings error: {e}")
         raise HTTPException(
-            status_code=500,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to fetch settings"
         )
 
@@ -767,7 +642,7 @@ async def update_user_settings(
         
         if not success:
             raise HTTPException(
-                status_code=400,
+                status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Failed to update settings"
             )
         
@@ -778,7 +653,7 @@ async def update_user_settings(
     except Exception as e:
         logger.error(f"Update settings error: {e}")
         raise HTTPException(
-            status_code=500,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Settings update failed"
         )
 
@@ -806,7 +681,7 @@ async def submit_feedback(
         
         if not feedback_result.get('success'):
             raise HTTPException(
-                status_code=400,
+                status_code=status.HTTP_400_BAD_REQUEST,
                 detail=feedback_result.get('error', 'Failed to submit feedback')
             )
         
@@ -822,7 +697,7 @@ async def submit_feedback(
     except Exception as e:
         logger.error(f"Feedback submission error: {e}")
         raise HTTPException(
-            status_code=500,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to submit feedback"
         )
 
@@ -846,7 +721,7 @@ async def get_feedback_analytics(
     except Exception as e:
         logger.error(f"Feedback analytics error: {e}")
         raise HTTPException(
-            status_code=500,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to fetch feedback analytics"
         )
 
@@ -864,7 +739,7 @@ async def check_domain_threat_intelligence(
         from security import InputValidator
         if not InputValidator.validate_domain(domain):
             raise HTTPException(
-                status_code=400,
+                status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Invalid domain format"
             )
         
@@ -880,7 +755,7 @@ async def check_domain_threat_intelligence(
     except Exception as e:
         logger.error(f"Domain reputation check error: {e}")
         raise HTTPException(
-            status_code=500,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to check domain reputation"
         )
 
@@ -897,7 +772,7 @@ async def check_url_threat_intelligence(
         from security import InputValidator
         if not InputValidator.validate_url(url):
             raise HTTPException(
-                status_code=400,
+                status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Invalid URL format"
             )
         
@@ -913,480 +788,9 @@ async def check_url_threat_intelligence(
     except Exception as e:
         logger.error(f"URL reputation check error: {e}")
         raise HTTPException(
-            status_code=500,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to check URL reputation"
         )
-
-# WebSocket endpoint for real-time updates
-@app.websocket("/api/ws/{user_id}")
-async def websocket_endpoint(websocket: WebSocket, user_id: str):
-    """WebSocket endpoint for real-time dashboard updates and notifications"""
-    try:
-        # Accept connection
-        connection_id = await realtime_manager.connect(websocket, user_id)
-        
-        try:
-            while True:
-                # Keep connection alive and handle incoming messages
-                try:
-                    data = await websocket.receive_text()
-                    message = json.loads(data)
-                    
-                    # Handle different message types
-                    if message.get("type") == "subscribe":
-                        # Handle subscription requests
-                        subscription_types = message.get("subscriptions", ["all"])
-                        # Update connection subscription preferences
-                        if connection_id in realtime_manager.connections:
-                            realtime_manager.connections[connection_id].subscription_types = set(subscription_types)
-                    
-                    elif message.get("type") == "request_stats":
-                        # Send fresh statistics on request
-                        await realtime_manager.send_dashboard_statistics(user_id)
-                    
-                    elif message.get("type") == "ping":
-                        # Handle ping messages to keep connection alive
-                        await websocket.send_text(json.dumps({
-                            "type": "pong",
-                            "timestamp": datetime.utcnow().isoformat()
-                        }))
-                
-                except WebSocketDisconnect:
-                    break
-                    
-                except json.JSONDecodeError:
-                    # Invalid JSON received, send error
-                    await websocket.send_text(json.dumps({
-                        "type": "error",
-                        "message": "Invalid JSON format"
-                    }))
-                
-                except Exception as e:
-                    logger.error(f"WebSocket message handling error: {e}")
-                    await websocket.send_text(json.dumps({
-                        "type": "error", 
-                        "message": "Message handling failed"
-                    }))
-                    
-        except WebSocketDisconnect:
-            pass
-        finally:
-            await realtime_manager.disconnect(connection_id)
-            
-    except Exception as e:
-        logger.error(f"WebSocket connection error: {e}")
-        try:
-            await websocket.close(code=1011, reason="Internal server error")
-        except:
-            pass
-
-# WebSocket connection statistics endpoint (admin only)
-@app.get("/api/ws/stats")
-async def websocket_stats(
-    request: Request,
-    current_user: UserResponse = Depends(get_current_active_user)
-):
-    """Get WebSocket connection statistics"""
-    try:
-        # Only allow admin users to view connection stats
-        if getattr(current_user, 'role', 'user') != "admin":
-            raise HTTPException(
-                status_code=403,
-                detail="Admin access required"
-            )
-        
-        stats = realtime_manager.get_connection_stats()
-        return {
-            "connection_statistics": stats,
-            "timestamp": datetime.utcnow().isoformat()
-        }
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"WebSocket stats error: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail="Failed to fetch connection statistics"
-        )
-
-# AI Usage Analytics endpoints
-@app.get("/api/ai/usage/analytics")
-@limiter.limit("10/minute")
-async def get_ai_usage_analytics(
-    request: Request,
-    days: int = 30,
-    current_user: UserResponse = Depends(get_current_active_user)
-):
-    """Get user's AI usage analytics"""
-    try:
-        from ai_cost_manager import usage_tracker
-        
-        analytics = await usage_tracker.get_user_usage_analytics(current_user.id, days)
-        
-        return {
-            "user_id": current_user.id,
-            "analytics": analytics,
-            "generated_at": datetime.utcnow().isoformat()
-        }
-        
-    except Exception as e:
-        logger.error(f"AI usage analytics error: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail="Failed to fetch AI usage analytics"
-        )
-
-@app.get("/api/ai/usage/limits")
-@limiter.limit("20/minute") 
-async def get_ai_usage_limits(
-    request: Request,
-    current_user: UserResponse = Depends(get_current_active_user)
-):
-    """Get user's current AI usage and limits"""
-    try:
-        from ai_cost_manager import check_ai_usage_limits
-        
-        # Default to free tier - can be enhanced with user tier lookup
-        user_tier = getattr(current_user, 'tier', 'free_tier')
-        within_limits, usage_info = await check_ai_usage_limits(current_user.id, user_tier)
-        
-        return {
-            "user_id": current_user.id,
-            "user_tier": user_tier,
-            **usage_info,
-            "checked_at": datetime.utcnow().isoformat()
-        }
-        
-    except Exception as e:
-        logger.error(f"AI usage limits error: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail="Failed to fetch AI usage limits"
-        )
-
-@app.get("/api/ai/cache/stats")
-@limiter.limit("5/minute")
-async def get_ai_cache_stats(
-    request: Request,
-    current_user: UserResponse = Depends(get_current_active_user)
-):
-    """Get AI cache performance statistics (admin only)"""
-    try:
-        # Only allow admin users to view cache stats
-        if getattr(current_user, 'role', 'user') != "admin":
-            raise HTTPException(
-                status_code=403,
-                detail="Admin access required to view cache statistics"
-            )
-        
-        # Try to get cache stats with fallback
-        try:
-            from ai_cost_manager import cache_manager
-            cache_stats = await cache_manager.get_cache_stats()
-        except ImportError:
-            cache_stats = {
-                "total_requests": 0,
-                "cache_hits": 0,
-                "cache_misses": 0,
-                "hit_rate": 0.0,
-                "total_savings": 0.0
-            }
-        
-        return {
-            "cache_statistics": cache_stats,
-            "timestamp": datetime.utcnow().isoformat()
-        }
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"AI cache stats error: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail="Failed to fetch AI cache statistics"
-        )
-
-# Admin Panel Management endpoints
-@app.get("/api/admin/dashboard/stats")
-@limiter.limit("10/minute")
-async def get_admin_dashboard_statistics(
-    request: Request,
-    current_user: UserResponse = Depends(get_current_active_user)
-):
-    """Get admin dashboard statistics (admin only)"""
-    try:
-        # Only allow admin users
-        if getattr(current_user, 'role', 'user') not in ["admin", "super_admin"]:
-            raise HTTPException(
-                status_code=403,
-                detail="Admin access required"
-            )
-        
-        stats = await get_admin_dashboard_stats()
-        
-        return {
-            "statistics": {
-                "total_users": stats.total_users,
-                "active_users": stats.active_users,
-                "total_organizations": stats.total_organizations,
-                "active_organizations": stats.active_organizations,
-                "today_scans": stats.today_scans,
-                "today_threats": stats.today_threats,
-                "total_threats_blocked": stats.total_threats_blocked,
-                "avg_risk_score": stats.avg_risk_score,
-                "ai_usage_cost": stats.ai_usage_cost,
-                "cache_hit_rate": stats.cache_hit_rate
-            },
-            "timestamp": datetime.utcnow().isoformat()
-        }
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Admin dashboard stats error: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail="Failed to fetch admin dashboard statistics"
-        )
-
-@app.get("/api/admin/users")
-@limiter.limit("20/minute")
-async def get_admin_user_management(
-    request: Request,
-    page: int = 1,
-    page_size: int = 50,
-    search: str = "",
-    current_user: UserResponse = Depends(get_current_active_user)
-):
-    """Get user management data (admin only)"""
-    try:
-        # Only allow admin users
-        if getattr(current_user, 'role', 'user') not in ["admin", "super_admin"]:
-            raise HTTPException(
-                status_code=403,
-                detail="Admin access required"
-            )
-        
-        # Validate pagination parameters
-        page = max(1, min(page, 1000))  # Limit to reasonable range
-        page_size = max(1, min(page_size, 100))  # Limit page size
-        
-        user_data = await get_user_management_data(page, page_size, search)
-        
-        return user_data
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Admin user management error: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail="Failed to fetch user management data"
-        )
-
-@app.put("/api/admin/users/{user_id}/status")
-@limiter.limit("30/minute")
-async def update_admin_user_status(
-    request: Request,
-    user_id: str,
-    status_data: dict,
-    current_user: UserResponse = Depends(get_current_active_user)
-):
-    """Update user status (admin only)"""
-    try:
-        # Only allow admin users
-        if getattr(current_user, 'role', 'user') not in ["admin", "super_admin"]:
-            raise HTTPException(
-                status_code=403,
-                detail="Admin access required"
-            )
-        
-        # Validate input
-        if "is_active" not in status_data:
-            raise HTTPException(
-                status_code=400,
-                detail="Missing is_active field"
-            )
-        
-        is_active = bool(status_data["is_active"])
-        
-        result = await update_user_status(current_user.id, user_id, is_active)
-        
-        if result["success"]:
-            return {"message": result["message"], "user_id": user_id, "is_active": is_active}
-        else:
-            raise HTTPException(
-                status_code=400,
-                detail=result["error"]
-            )
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Admin user status update error: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail="Failed to update user status"
-        )
-
-@app.put("/api/admin/users/{user_id}/role")
-@limiter.limit("20/minute")
-async def update_admin_user_role(
-    request: Request,
-    user_id: str,
-    role_data: dict,
-    current_user: UserResponse = Depends(get_current_active_user)
-):
-    """Update user role (admin only)"""
-    try:
-        # Only allow super admin users for role changes
-        if getattr(current_user, 'role', 'user') != "super_admin":
-            raise HTTPException(
-                status_code=403,
-                detail="Super admin access required"
-            )
-        
-        # Validate input
-        if "role" not in role_data:
-            raise HTTPException(
-                status_code=400,
-                detail="Missing role field"
-            )
-        
-        new_role = str(role_data["role"])
-        
-        result = await update_user_role(current_user.id, user_id, new_role)
-        
-        if result["success"]:
-            return {"message": result["message"], "user_id": user_id, "new_role": new_role}
-        else:
-            raise HTTPException(
-                status_code=400,
-                detail=result["error"]
-            )
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Admin user role update error: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail="Failed to update user role"
-        )
-
-@app.get("/api/admin/threats")
-@limiter.limit("10/minute")
-async def get_admin_threat_management(
-    request: Request,
-    days: int = 7,
-    current_user: UserResponse = Depends(get_current_active_user)
-):
-    """Get threat management data (admin only)"""
-    try:
-        # Only allow admin users
-        if getattr(current_user, 'role', 'user') not in ["admin", "super_admin"]:
-            raise HTTPException(
-                status_code=403,
-                detail="Admin access required"
-            )
-        
-        # Validate days parameter
-        days = max(1, min(days, 90))  # Limit to reasonable range
-        
-        threat_data = await get_threat_management_data(days)
-        
-        return threat_data
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Admin threat management error: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail="Failed to fetch threat management data"
-        )
-
-@app.get("/api/admin/system/monitoring")
-@limiter.limit("5/minute")
-async def get_admin_system_monitoring(
-    request: Request,
-    current_user: UserResponse = Depends(get_current_active_user)
-):
-    """Get system monitoring data (admin only)"""
-    try:
-        # Only allow admin users
-        if getattr(current_user, 'role', 'user') not in ["admin", "super_admin"]:
-            raise HTTPException(
-                status_code=403,
-                detail="Admin access required"
-            )
-        
-        monitoring_data = await get_system_monitoring_data()
-        
-        return monitoring_data
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Admin system monitoring error: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail="Failed to fetch system monitoring data"
-        )
-
-@app.get("/api/admin/audit/log")
-@limiter.limit("10/minute")
-async def get_admin_audit_logs(
-    request: Request,
-    page: int = 1,
-    page_size: int = 50,
-    days: int = 30,
-    current_user: UserResponse = Depends(get_current_active_user)
-):
-    """Get admin audit logs (super admin only)"""
-    try:
-        # Only allow super admin users
-        if getattr(current_user, 'role', 'user') != "super_admin":
-            raise HTTPException(
-                status_code=403,
-                detail="Super admin access required"
-            )
-        
-        # Validate parameters
-        page = max(1, min(page, 1000))
-        page_size = max(1, min(page_size, 100))
-        days = max(1, min(days, 365))
-        
-        audit_log = await get_admin_audit_log(page, page_size, days)
-        
-        return audit_log
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Admin audit log error: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail="Failed to fetch admin audit logs"
-        )
-
-# Helper functions for safe AI scanning
-async def safe_scan_email_with_ai(email_data, user_id):
-    """Safe wrapper for AI email scanning with fallback"""
-    try:
-        return await scan_email_with_ai(email_data, user_id)
-    except Exception as e:
-        logger.warning(f"AI email scanning failed: {e}")
-        return scan_email_advanced(email_data)
-
-async def safe_scan_link_with_ai(url, context=""):
-    """Safe wrapper for AI link scanning with fallback"""
-    try:
-        return await scan_link_with_ai(url, context)
-    except Exception as e:
-        logger.warning(f"AI link scanning failed: {e}")
-        return scan_link_advanced(url, context)
 
 # Helper functions
 def _is_shortened_url(url: str) -> bool:
