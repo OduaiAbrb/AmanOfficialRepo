@@ -127,14 +127,14 @@ export const AuthProvider = ({ children }) => {
       
       return { success: false, error: errorMessage };
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
   // Register function
   const register = async (name, email, password, organization) => {
     try {
-      setIsLoading(true);
+      setLoading(true);
       
       const response = await axios.post(`${backendUrl}/api/auth/register`, {
         name,
