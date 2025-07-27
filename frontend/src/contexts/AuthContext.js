@@ -188,7 +188,6 @@ export const AuthProvider = ({ children }) => {
     // Update state
     setAuthToken(null);
     setUser(null);
-    setIsAuthenticated(false);
   };
 
   // Refresh token function
