@@ -293,44 +293,37 @@ async def scan_link(scan_request: LinkScanRequest, current_user = Depends(get_cu
 
 # Dashboard endpoints
 @app.get("/api/dashboard/stats")
-async def get_dashboard_stats(current_user = Depends(get_current_user)):
+async def get_stats(current_user = Depends(get_current_user)):
     try:
-        # Get user stats
         stats = await EmailScanDatabase.get_user_stats(current_user["id"])
-        
         return {
-            "total_scans": stats.get("total_scans", 0),
-            "phishing_caught": stats.get("phishing_caught", 0),
+            "phishing_emails_caught": stats.get("threats_blocked", 0),
             "safe_emails": stats.get("safe_emails", 0),
-            "potential_phishing": stats.get("potential_phishing", 0),
-            "accuracy_rate": 95.5,
-            "last_updated": datetime.utcnow().isoformat()
+            "potential_phishing": stats.get("potential_threats", 0),
+            "total_scans": stats.get("total_scans", 0)
         }
     except Exception as e:
-        logger.error(f"Dashboard stats error: {e}")
-        raise HTTPException(status_code=500, detail="Failed to fetch dashboard stats")
+        logger.error(f"Stats error: {e}")
+        return {"phishing_emails_caught": 0, "safe_emails": 0, "potential_phishing": 0, "total_scans": 0}
 
 @app.get("/api/dashboard/recent-emails")
-async def get_recent_emails(current_user = Depends(get_current_user), limit: int = 10):
+async def get_recent_emails(current_user = Depends(get_current_user)):
     try:
-        # Get recent scans
-        recent_scans = await EmailScanDatabase.get_recent_scans(current_user["id"], limit)
-        
-        emails = []
-        for scan in recent_scans:
-            emails.append({
-                "id": scan.get("id", ""),
-                "subject": scan.get("email_subject", ""),
+        scans = await EmailScanDatabase.get_recent_scans(current_user["id"], limit=10)
+        recent_scans = []
+        for scan in scans:
+            recent_scans.append({
+                "id": str(scan.get("_id", "")),
+                "subject": scan.get("email_subject", "")[:50],
                 "sender": scan.get("sender", ""),
-                "time": "Just now",  # Simplified
-                "status": scan.get("scan_result", ""),
-                "risk_score": scan.get("risk_score", 0)
+                "status": scan.get("scan_result", "safe"),
+                "risk_score": scan.get("risk_score", 0),
+                "timestamp": str(scan.get("created_at", datetime.utcnow()))
             })
-        
-        return {"emails": emails}
+        return {"recent_scans": recent_scans}
     except Exception as e:
         logger.error(f"Recent emails error: {e}")
-        raise HTTPException(status_code=500, detail="Failed to fetch recent emails")
+        return {"recent_scans": []}
 
 if __name__ == "__main__":
     import uvicorn
