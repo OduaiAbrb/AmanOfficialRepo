@@ -42,6 +42,41 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
+  // Update axios defaults when token changes
+  useEffect(() => {
+    if (authToken) {
+      axios.defaults.headers.common['Authorization'] = `Bearer ${authToken}`;
+    } else {
+      delete axios.defaults.headers.common['Authorization'];
+    }
+  }, [authToken]);
+
+  // Set up axios interceptor for automatic token refresh
+  useEffect(() => {
+    const interceptor = axios.interceptors.response.use(
+      (response) => response,
+      async (error) => {
+        const originalRequest = error.config;
+        
+        if (error.response?.status === 401 && !originalRequest._retry) {
+          originalRequest._retry = true;
+          
+          const refreshed = await refreshAuthToken();
+          if (refreshed) {
+            // Retry the original request with new token
+            return axios(originalRequest);
+          }
+        }
+        
+        return Promise.reject(error);
+      }
+    );
+
+    return () => {
+      axios.interceptors.response.eject(interceptor);
+    };
+  }, []);
+
   // Verify token validity
   const verifyToken = async (token) => {
     try {
@@ -240,20 +275,18 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (error) {
       console.error('Profile update error:', error);
-      return { 
-        success: false, 
-        error: (() => {
-          const detail = error.response?.data?.detail;
-          if (typeof detail === 'string') {
-            return detail;
-          } else if (Array.isArray(detail)) {
-            return detail.map(err => err.msg || err.type || 'Validation error').join(', ');
-          } else if (typeof detail === 'object' && detail) {
-            return detail.msg || detail.type || 'Profile update failed';
-          }
-          return 'Profile update failed';
-        })()
-      };
+      const detail = error.response?.data?.detail;
+      let errorMessage = 'Profile update failed';
+      
+      if (typeof detail === 'string') {
+        errorMessage = detail;
+      } else if (Array.isArray(detail)) {
+        errorMessage = detail.map(err => err.msg || err.type || 'Validation error').join(', ');
+      } else if (typeof detail === 'object' && detail) {
+        errorMessage = detail.msg || detail.type || 'Profile update failed';
+      }
+      
+      return { success: false, error: errorMessage };
     }
   };
 
@@ -285,42 +318,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Set up axios interceptor for automatic token refresh
-  useEffect(() => {
-    const interceptor = axios.interceptors.response.use(
-      (response) => response,
-      async (error) => {
-        const originalRequest = error.config;
-        
-        if (error.response?.status === 401 && !originalRequest._retry) {
-          originalRequest._retry = true;
-          
-          const refreshed = await refreshAuthToken();
-          if (refreshed) {
-            // Retry the original request with new token
-            return axios(originalRequest);
-          }
-        }
-        
-        return Promise.reject(error);
-      }
-    );
-
-    return () => {
-      axios.interceptors.response.eject(interceptor);
-    };
-  }, []);
-
-  // Update axios defaults when token changes
-  useEffect(() => {
-    if (authToken) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${authToken}`;
-    } else {
-      delete axios.defaults.headers.common['Authorization'];
-    }
-  }, [authToken]);
-
-  const value = {
+  const contextValue = {
     user,
     loading,
     authToken,
@@ -335,7 +333,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );
