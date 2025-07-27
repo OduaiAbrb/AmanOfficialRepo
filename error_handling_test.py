@@ -475,7 +475,7 @@ if __name__ == "__main__":
     tester = ErrorHandlingTester()
     success_rate = tester.run_all_tests()
     
-    if success_rate >= 85:
+    if success_rate is not None and success_rate >= 85:
         print(f"\n🎯 Backend error handling is working well ({success_rate:.1f}% success rate)")
         sys.exit(0)
     else:
