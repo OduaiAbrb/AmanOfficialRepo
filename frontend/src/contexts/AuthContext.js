@@ -260,7 +260,7 @@ export const AuthProvider = ({ children }) => {
   // Get user settings
   const getUserSettings = async () => {
     try {
-      const response = await axios.get(`${backendUrl}/api/user/settings`);
+      const response = await axios.get(`${backendUrl}/user/settings`);
       return { success: true, settings: response.data };
     } catch (error) {
       console.error('Get settings error:', error);
