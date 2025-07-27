@@ -4,7 +4,6 @@ Replaces JWT with secure token generation using secrets and hashlib
 """
 
 import secrets
-import hashlib
 import time
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
