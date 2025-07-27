@@ -516,7 +516,7 @@ const ProfilePage = ({ user }) => {
       
       {message && (
         <div className={`p-4 rounded-md ${message.includes('success') ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
-          {message}
+          {typeof message === 'string' ? message : 'An error occurred'}
         </div>
       )}
       
