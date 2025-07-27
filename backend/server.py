@@ -560,7 +560,7 @@ async def scan_email(
         
         # Enhanced security logging
         log_security_event("EMAIL_SCAN_COMPLETED", {
-            "scan_id": scan_result.id,
+            "scan_id": str(scan_result.get("_id", "")),
             "risk_score": risk_score,
             "status": status.value,
             "ai_powered": scan_data["ai_powered"]
@@ -569,7 +569,7 @@ async def scan_email(
         logger.info(f"Email scan completed for user {current_user.email}: risk_score={risk_score}, status={status.value}")
         
         return EmailScanResponse(
-            id=scan_result.id,
+            id=str(scan_result.get("_id", "")),
             status=status,
             risk_score=risk_score,
             explanation=explanation,
