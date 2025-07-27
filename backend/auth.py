@@ -142,7 +142,7 @@ def create_refresh_token(data: Dict[str, Any]) -> str:
     logger.info(f"Created refresh token for user: {data.get('email')}")
     return token
 
-def verify_token(token: str, token_type: str = "access") -> Optional[TokenData]:
+def verify_token(token: str, token_type: str = "access") -> Optional[Dict[str, Any]]:
     """Verify and decode a token"""
     try:
         # Choose the right token storage
@@ -164,7 +164,7 @@ def verify_token(token: str, token_type: str = "access") -> Optional[TokenData]:
             del token_storage[token]
             return None
         
-        return TokenData(user_id=token_data["sub"], email=token_data["email"])
+        return token_data
         
     except Exception as e:
         logger.error(f"Token verification error: {e}")
