@@ -1,32 +1,37 @@
 """
-Authentication and Security Module for Aman Cybersecurity Platform
-Implements JWT authentication, password hashing, and security utilities
+Simple token-based authentication system for Aman Cybersecurity Platform  
+Replaces JWT with secure token generation using secrets and hashlib
 """
 
+import secrets
+import hashlib
+import time
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
-from jose import JWTError, jwt
-from passlib.context import CryptContext
-from fastapi import HTTPException, status, Depends
+from fastapi import HTTPException, Depends, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-import os
-import secrets
-import string
+from passlib.context import CryptContext
 from pydantic import BaseModel, EmailStr
 import uuid
+import string
+import logging
 from database import get_database
 
-# Security configuration
-SECRET_KEY = os.environ.get("SECRET_KEY", secrets.token_urlsafe(32))
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
-REFRESH_TOKEN_EXPIRE_DAYS = 7
+logger = logging.getLogger(__name__)
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-# HTTP Bearer for token authentication
+# Security scheme
 security = HTTPBearer()
+
+# Token storage (in production, use Redis or database)
+active_tokens = {}
+refresh_tokens = {}
+
+# Token settings
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
+REFRESH_TOKEN_EXPIRE_DAYS = 7
 
 # Pydantic models for authentication
 class Token(BaseModel):
@@ -70,7 +75,6 @@ class UserResponse(BaseModel):
     created_at: datetime
     last_login: Optional[datetime] = None
 
-# Password utilities
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a password against its hash"""
     return pwd_context.verify(plain_password, hashed_password)
@@ -91,46 +95,110 @@ def validate_password_strength(password: str) -> bool:
     
     return all([has_upper, has_lower, has_digit, has_special])
 
-# JWT token utilities
-def create_access_token(data: Dict[Any, Any], expires_delta: Optional[timedelta] = None) -> str:
-    """Create JWT access token"""
-    to_encode = data.copy()
-    
+def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta] = None) -> str:
+    """Create a new access token"""
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
         expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     
-    to_encode.update({"exp": expire, "type": "access"})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
+    # Generate secure token
+    token = secrets.token_urlsafe(32)
+    
+    # Create token data
+    token_data = {
+        "sub": data.get("sub"),
+        "email": data.get("email"),
+        "exp": expire.timestamp(),
+        "iat": datetime.utcnow().timestamp(),
+        "type": "access"
+    }
+    
+    # Store token data
+    active_tokens[token] = token_data
+    
+    logger.info(f"Created access token for user: {data.get('email')}")
+    return token
 
-def create_refresh_token(data: Dict[Any, Any]) -> str:
-    """Create JWT refresh token"""
-    to_encode = data.copy()
+def create_refresh_token(data: Dict[str, Any]) -> str:
+    """Create a new refresh token"""
     expire = datetime.utcnow() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
-    to_encode.update({"exp": expire, "type": "refresh"})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
+    
+    # Generate secure refresh token
+    token = secrets.token_urlsafe(32)
+    
+    # Create token data
+    token_data = {
+        "sub": data.get("sub"),
+        "email": data.get("email"),
+        "exp": expire.timestamp(),
+        "iat": datetime.utcnow().timestamp(),
+        "type": "refresh"
+    }
+    
+    # Store refresh token data
+    refresh_tokens[token] = token_data
+    
+    logger.info(f"Created refresh token for user: {data.get('email')}")
+    return token
 
 def verify_token(token: str, token_type: str = "access") -> Optional[TokenData]:
-    """Verify and decode JWT token"""
+    """Verify and decode a token"""
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        # Choose the right token storage
+        token_storage = active_tokens if token_type == "access" else refresh_tokens
+        
+        # Check if token exists
+        if token not in token_storage:
+            return None
+        
+        token_data = token_storage[token]
         
         # Check token type
-        if payload.get("type") != token_type:
+        if token_data.get("type") != token_type:
             return None
-            
-        user_id: str = payload.get("sub")
-        email: str = payload.get("email")
         
-        if user_id is None or email is None:
+        # Check if token is expired
+        if token_data["exp"] < datetime.utcnow().timestamp():
+            # Remove expired token
+            del token_storage[token]
             return None
-            
-        return TokenData(user_id=user_id, email=email)
-    except JWTError:
+        
+        return TokenData(user_id=token_data["sub"], email=token_data["email"])
+        
+    except Exception as e:
+        logger.error(f"Token verification error: {e}")
         return None
+
+def decode_refresh_token(refresh_token: str) -> Optional[Dict[str, Any]]:
+    """Decode and verify refresh token"""
+    token_data = verify_token(refresh_token, "refresh")
+    if token_data:
+        return {"sub": token_data.user_id, "email": token_data.email}
+    return None
+
+def cleanup_expired_tokens():
+    """Clean up expired tokens (should be run periodically)"""
+    current_time = datetime.utcnow().timestamp()
+    
+    # Clean access tokens
+    expired_access = [
+        token for token, data in active_tokens.items()
+        if data["exp"] < current_time
+    ]
+    for token in expired_access:
+        del active_tokens[token]
+    
+    # Clean refresh tokens
+    expired_refresh = [
+        token for token, data in refresh_tokens.items()
+        if data["exp"] < current_time
+    ]
+    for token in expired_refresh:
+        del refresh_tokens[token]
+    
+    if expired_access or expired_refresh:
+        logger.info(f"Cleaned up {len(expired_access)} access tokens and {len(expired_refresh)} refresh tokens")
 
 # Database operations for users
 async def get_user_by_email(email: str) -> Optional[UserInDB]:
@@ -307,3 +375,6 @@ def create_token_response(user: UserInDB) -> Token:
         token_type="bearer",
         expires_in=ACCESS_TOKEN_EXPIRE_MINUTES * 60
     )
+
+# Run cleanup on module import
+cleanup_expired_tokens()
