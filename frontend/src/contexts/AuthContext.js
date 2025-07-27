@@ -116,7 +116,16 @@ export const AuthProvider = ({ children }) => {
       } else if (error.response?.status === 429) {
         errorMessage = 'Too many login attempts. Please try again later.';
       } else if (error.response?.data?.detail) {
-        errorMessage = error.response.data.detail;
+        // Handle FastAPI validation errors that might be objects
+        if (typeof error.response.data.detail === 'string') {
+          errorMessage = error.response.data.detail;
+        } else if (Array.isArray(error.response.data.detail)) {
+          // Handle validation error array
+          errorMessage = error.response.data.detail.map(err => err.msg || err.type || 'Validation error').join(', ');
+        } else if (typeof error.response.data.detail === 'object') {
+          // Handle validation error object
+          errorMessage = error.response.data.detail.msg || error.response.data.detail.type || 'Invalid input';
+        }
       }
       
       return { success: false, error: errorMessage };
