@@ -226,7 +226,7 @@ export const AuthProvider = ({ children }) => {
   // Update user profile
   const updateProfile = async (updateData) => {
     try {
-      const response = await axios.put(`${backendUrl}/api/user/profile`, updateData);
+      const response = await axios.put(`${backendUrl}/user/profile`, updateData);
       
       if (response.status === 200) {
         // Get updated profile
