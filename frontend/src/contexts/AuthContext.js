@@ -199,7 +199,7 @@ export const AuthProvider = ({ children }) => {
         return false;
       }
 
-      const response = await axios.post(`${backendUrl}/api/auth/refresh`, {
+      const response = await axios.post(`${backendUrl}/auth/refresh`, {
         refresh_token: refreshToken
       });
 
