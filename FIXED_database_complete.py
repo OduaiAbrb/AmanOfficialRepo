@@ -435,7 +435,6 @@ class AdminDatabase:
             "active_users": active_users
         }
 
-
 # Initialize collections function
 async def init_collections():
     """Initialize database collections and indexes"""
@@ -476,48 +475,3 @@ async def init_collections():
     except Exception as e:
         logger.error(f"❌ Failed to initialize collections: {e}")
         # Don't raise, just log the error for development
-
-# Helper functions for database operations
-async def cleanup_expired_data():
-    """Clean up expired data from database"""
-    try:
-        db = get_database()
-        if db is None:
-            return
-        
-        # Clean old AI cache (older than 7 days)
-        seven_days_ago = datetime.utcnow() - timedelta(days=7)
-        await db.ai_cache.delete_many({"created_at": {"$lt": seven_days_ago}})
-        
-        # Clean old admin actions (older than 90 days)
-        ninety_days_ago = datetime.utcnow() - timedelta(days=90)
-        await db.admin_actions.delete_many({"created_at": {"$lt": ninety_days_ago}})
-        
-        logger.info("✅ Database cleanup completed")
-        
-    except Exception as e:
-        logger.error(f"❌ Database cleanup failed: {e}")
-
-async def get_database_stats():
-    """Get overall database statistics"""
-    try:
-        db = get_database()
-        if db is None:
-            return {}
-        
-        stats = {}
-        collections = ["users", "email_scans", "threat_logs", "feedback", "ai_usage"]
-        
-        for collection in collections:
-            count = await db[collection].count_documents({})
-            stats[collection] = count
-        
-        return stats
-        
-    except Exception as e:
-        logger.error(f"❌ Failed to get database stats: {e}")
-        return {}
-
-# Log database setup
-logger.info("🗄️ Database module loaded with all required classes")
-print("✅ Database Classes: UserDatabase, EmailScanDatabase, SettingsDatabase, ThreatDatabase, FeedbackDatabase, AICostDatabase, AdminDatabase")

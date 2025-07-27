@@ -189,7 +189,7 @@ const Dashboard = () => {
               <span className="text-4xl">⚠️</span>
             </div>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">Error Loading Data</h2>
-            <p className="text-gray-600 mb-6">{error}</p>
+            <p className="text-gray-600 mb-6">{typeof error === 'string' ? error : 'Failed to load dashboard data. Please try again.'}</p>
             <button 
               onClick={fetchDashboardData}
               className="btn-primary"
@@ -516,7 +516,7 @@ const ProfilePage = ({ user }) => {
       
       {message && (
         <div className={`p-4 rounded-md ${message.includes('success') ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
-          {message}
+          {typeof message === 'string' ? message : 'An error occurred'}
         </div>
       )}
       
@@ -713,7 +713,7 @@ const SettingsPage = () => {
 
       {message && (
         <div className={`p-4 rounded-md ${message.includes('success') ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
-          {message}
+          {typeof message === 'string' ? message : 'An error occurred'}
         </div>
       )}
 

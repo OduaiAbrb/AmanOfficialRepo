@@ -23,8 +23,8 @@ import uuid
 
 # Configuration
 
-BACKEND_URL = "https://859201a4-6ec0-482a-aafb-51101591fb03.preview.emergentagent.com"
 
+BACKEND_URL = "https://f8e0a18c-634d-449c-bde8-c523f13f683c.preview.emergentagent.com"
 API_BASE = f"{BACKEND_URL}/api"
 
 class AITestUser:
