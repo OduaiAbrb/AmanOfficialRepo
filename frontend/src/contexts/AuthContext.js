@@ -155,7 +155,18 @@ export const AuthProvider = ({ children }) => {
       let errorMessage = 'Registration failed. Please try again.';
       
       if (error.response?.status === 400) {
-        errorMessage = error.response.data.detail || 'Invalid registration data.';
+        // Handle FastAPI validation errors that might be objects
+        if (typeof error.response.data.detail === 'string') {
+          errorMessage = error.response.data.detail;
+        } else if (Array.isArray(error.response.data.detail)) {
+          // Handle validation error array
+          errorMessage = error.response.data.detail.map(err => err.msg || err.type || 'Validation error').join(', ');
+        } else if (typeof error.response.data.detail === 'object') {
+          // Handle validation error object  
+          errorMessage = error.response.data.detail.msg || error.response.data.detail.type || 'Invalid registration data';
+        } else {
+          errorMessage = 'Invalid registration data.';
+        }
       } else if (error.response?.status === 429) {
         errorMessage = 'Too many registration attempts. Please try again later.';
       }
