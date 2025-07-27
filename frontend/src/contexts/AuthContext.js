@@ -39,7 +39,7 @@ export const AuthProvider = ({ children }) => {
         logout();
       }
     }
-    setIsLoading(false);
+    setLoading(false);
   }, []);
 
   // Verify token validity
