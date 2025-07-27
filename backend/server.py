@@ -381,7 +381,7 @@ async def get_dashboard_stats(
 ):
     """Get dashboard statistics for current user"""
     try:
-        stats_data = await EmailScanDatabase.get_dashboard_stats(user_id=current_user.id)
+        stats_data = await EmailScanDatabase.get_user_stats(user_id=current_user.id)
         
         # Calculate accuracy rate (placeholder logic)
         total_scans = stats_data.get("total_scans", 0)
