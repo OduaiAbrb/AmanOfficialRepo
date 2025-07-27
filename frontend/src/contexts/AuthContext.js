@@ -246,7 +246,17 @@ export const AuthProvider = ({ children }) => {
       console.error('Profile update error:', error);
       return { 
         success: false, 
-        error: error.response?.data?.detail || 'Profile update failed' 
+        error: (() => {
+          const detail = error.response?.data?.detail;
+          if (typeof detail === 'string') {
+            return detail;
+          } else if (Array.isArray(detail)) {
+            return detail.map(err => err.msg || err.type || 'Validation error').join(', ');
+          } else if (typeof detail === 'object' && detail) {
+            return detail.msg || detail.type || 'Profile update failed';
+          }
+          return 'Profile update failed';
+        })()
       };
     }
   };
