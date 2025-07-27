@@ -537,7 +537,7 @@ async def scan_email(
         try:
             # Convert scan result to notification format
             notification_data = {
-                "id": scan_result.id,
+                "id": str(scan_result.get("_id", "")),
                 "status": status.value,
                 "risk_score": risk_score,
                 "explanation": explanation,
