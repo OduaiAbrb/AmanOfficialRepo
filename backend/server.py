@@ -95,6 +95,52 @@ app.add_exception_handler(RateLimitExceeded, lambda request, exc: JSONResponse(
 ))
 app.add_middleware(SlowAPIMiddleware)
 
+# Add validation error handler to return string messages instead of objects
+from fastapi.exceptions import RequestValidationError
+from pydantic import ValidationError
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """Convert validation errors to user-friendly string messages"""
+    errors = exc.errors()
+    if errors:
+        # Extract meaningful error messages
+        error_messages = []
+        for error in errors:
+            field = " -> ".join(str(loc) for loc in error.get("loc", []))
+            msg = error.get("msg", "Invalid input")
+            error_messages.append(f"{field}: {msg}")
+        
+        detail = "; ".join(error_messages) if error_messages else "Invalid input provided"
+    else:
+        detail = "Invalid input provided"
+    
+    return JSONResponse(
+        status_code=422,
+        content={"error": "Validation Error", "detail": detail}
+    )
+
+@app.exception_handler(ValidationError)
+async def pydantic_validation_exception_handler(request: Request, exc: ValidationError):
+    """Convert Pydantic validation errors to user-friendly string messages"""
+    errors = exc.errors()
+    if errors:
+        # Extract meaningful error messages
+        error_messages = []
+        for error in errors:
+            field = " -> ".join(str(loc) for loc in error.get("loc", []))
+            msg = error.get("msg", "Invalid input")
+            error_messages.append(f"{field}: {msg}")
+        
+        detail = "; ".join(error_messages) if error_messages else "Invalid input provided"
+    else:
+        detail = "Invalid input provided"
+    
+    return JSONResponse(
+        status_code=422,
+        content={"error": "Validation Error", "detail": detail}
+    )
+
 # Add security middleware (temporarily disabled due to implementation issues)
 # app.add_middleware(SecurityMiddleware)
 
