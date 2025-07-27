@@ -64,7 +64,7 @@ export const AuthProvider = ({ children }) => {
   // Login function
   const login = async (email, password) => {
     try {
-      setIsLoading(true);
+      setLoading(true);
       
       const response = await axios.post(`${backendUrl}/api/auth/login`, {
         email,
