@@ -1,13 +1,23 @@
+
+"""
+Simple token-based authentication system for Aman Cybersecurity Platform  
+Replaces JWT with secure token generation using secrets and hashlib
+"""
+
 import secrets
-import hashlib
 import time
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
 from fastapi import HTTPException, Depends, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from passlib.context import CryptContext
-from database import get_database, UserDatabase
+
+from pydantic import BaseModel, EmailStr
+import uuid
+import string
 import logging
+from database import get_database
+
 
 logger = logging.getLogger(__name__)
 
@@ -21,10 +31,48 @@ security = HTTPBearer()
 active_tokens = {}
 refresh_tokens = {}
 
+
 # Token settings
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 REFRESH_TOKEN_EXPIRE_DAYS = 7
 
+# Pydantic models for authentication
+class Token(BaseModel):
+    access_token: str
+    refresh_token: str
+    token_type: str = "bearer"
+    expires_in: int
+
+# Token settings
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
+REFRESH_TOKEN_EXPIRE_DAYS = 7
+
+
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+class UserInDB(BaseModel):
+    id: str
+    email: str
+    name: str
+    organization: Optional[str] = None
+    hashed_password: str
+    is_active: bool = True
+    created_at: datetime
+    last_login: Optional[datetime] = None
+    failed_login_attempts: int = 0
+    locked_until: Optional[datetime] = None
+
+class UserResponse(BaseModel):
+    id: str
+    email: str
+    name: str
+    organization: Optional[str] = None
+    is_active: bool
+    created_at: datetime
+    last_login: Optional[datetime] = None
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a password against its hash"""
@@ -45,6 +93,108 @@ def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta]
     
     # Generate secure token
     token = secrets.token_urlsafe(32)
+
+    
+    # Create token data
+    token_data = {
+        "sub": data.get("sub"),
+        "email": data.get("email"),
+        "exp": expire.timestamp(),
+        "iat": datetime.utcnow().timestamp(),
+        "type": "access"
+    }
+    
+    # Store token data
+    active_tokens[token] = token_data
+    
+    logger.info(f"Created access token for user: {data.get('email')}")
+    return token
+
+def create_refresh_token(data: Dict[str, Any]) -> str:
+    """Create a new refresh token"""
+    expire = datetime.utcnow() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+    
+    # Generate secure refresh token
+    token = secrets.token_urlsafe(32)
+    
+    # Create token data
+    token_data = {
+        "sub": data.get("sub"),
+        "email": data.get("email"),
+        "exp": expire.timestamp(),
+        "iat": datetime.utcnow().timestamp(),
+        "type": "refresh"
+    }
+    
+    # Store refresh token data
+    refresh_tokens[token] = token_data
+    
+    logger.info(f"Created refresh token for user: {data.get('email')}")
+    return token
+
+def verify_token(token: str, token_type: str = "access") -> Optional[Dict[str, Any]]:
+    """Verify and decode a token"""
+    try:
+        # Choose the right token storage
+        token_storage = active_tokens if token_type == "access" else refresh_tokens
+        
+        # Check if token exists
+        if token not in token_storage:
+            return None
+        
+        token_data = token_storage[token]
+        
+        # Check token type
+        if token_data.get("type") != token_type:
+            return None
+        
+        # Check if token is expired
+        if token_data["exp"] < datetime.utcnow().timestamp():
+            # Remove expired token
+            del token_storage[token]
+            return None
+        
+        return token_data
+        
+    except Exception as e:
+        logger.error(f"Token verification error: {e}")
+        return None
+
+def decode_refresh_token(refresh_token: str) -> Optional[Dict[str, Any]]:
+    """Decode and verify refresh token"""
+    token_data = verify_token(refresh_token, "refresh")
+    if token_data:
+        return {"sub": token_data.user_id, "email": token_data.email}
+    return None
+
+def cleanup_expired_tokens():
+    """Clean up expired tokens (should be run periodically)"""
+    current_time = datetime.utcnow().timestamp()
+    
+    # Clean access tokens
+    expired_access = [
+        token for token, data in active_tokens.items()
+        if data["exp"] < current_time
+    ]
+    for token in expired_access:
+        del active_tokens[token]
+    
+    # Clean refresh tokens
+    expired_refresh = [
+        token for token, data in refresh_tokens.items()
+        if data["exp"] < current_time
+    ]
+    for token in expired_refresh:
+        del refresh_tokens[token]
+    
+    if expired_access or expired_refresh:
+        logger.info(f"Cleaned up {len(expired_access)} access tokens and {len(expired_refresh)} refresh tokens")
+
+# Database operations for users
+async def get_user_by_email(email: str) -> Optional[UserInDB]:
+    """Get user from database by email"""
+    db = get_database()
+    user_doc = await db.users.find_one({"email": email})
     
     # Create token hash for validation
     token_data = {
@@ -217,17 +367,13 @@ def cleanup_expired_tokens():
     for token in expired_access:
         del active_tokens[token]
     
-    # Clean refresh tokens
-    expired_refresh = [
-        token for token, data in refresh_tokens.items()
-        if data["exp"] < current_time
-    ]
-    for token in expired_refresh:
-        del refresh_tokens[token]
-    
-    if expired_access or expired_refresh:
-        logger.info(f"Cleaned up {len(expired_access)} access tokens and {len(expired_refresh)} refresh tokens")
 
+    return Token(
+        access_token=access_token,
+        refresh_token=refresh_token,
+        token_type="bearer",
+        expires_in=ACCESS_TOKEN_EXPIRE_MINUTES * 60
+    )
 
 # Run cleanup on module import
 cleanup_expired_tokens()
