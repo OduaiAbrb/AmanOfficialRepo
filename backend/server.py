@@ -412,7 +412,7 @@ async def get_recent_emails(
 ):
     """Get recent email scans for current user"""
     try:
-        recent_scans = await EmailScanDatabase.get_user_recent_scans(
+        recent_scans = await EmailScanDatabase.get_recent_scans(
             current_user.id, limit=min(limit, 50)
         )
         
