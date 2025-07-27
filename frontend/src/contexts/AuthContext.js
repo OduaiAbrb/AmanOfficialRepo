@@ -230,7 +230,7 @@ export const AuthProvider = ({ children }) => {
       
       if (response.status === 200) {
         // Get updated profile
-        const profileResponse = await axios.get(`${backendUrl}/api/user/profile`);
+        const profileResponse = await axios.get(`${backendUrl}/user/profile`);
         const updatedUser = profileResponse.data;
         
         setUser(updatedUser);
