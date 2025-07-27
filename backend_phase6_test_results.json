@@ -1,7 +1,11 @@
 {
   "timestamp": "2025-07-25T01:04:50.758480",
+<<<<<<< HEAD
   "backend_url": "https://859201a4-6ec0-482a-aafb-51101591fb03.preview.emergentagent.com/api",
 
+=======
+  "backend_url": "https://f8e0a18c-634d-449c-bde8-c523f13f683c.preview.emergentagent.com/api",
+>>>>>>> c79b7619501b0f724bbf65a305cf406c59942f3a
   "phase": "Phase 6 - Secure Backend API Development",
   "results": [
     {
