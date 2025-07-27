@@ -239,24 +239,56 @@ async def refresh_token_endpoint(refresh_data: TokenRefresh):
         logger.error(f"Token refresh error: {e}")
         raise HTTPException(status_code=500, detail="Token refresh failed")
 
-# Scan endpoints
+# Profile endpoints
+@app.get("/api/user/profile")
+async def get_profile(current_user = Depends(get_current_user)):
+    return {
+        "id": current_user["id"],
+        "name": current_user["name"],
+        "email": current_user["email"],
+        "organization": current_user.get("organization", ""),
+        "role": current_user.get("role", "user")
+    }
+
+@app.put("/api/user/profile")
+async def update_profile(profile_data: dict, current_user = Depends(get_current_user)):
+    try:
+        allowed_fields = ["name", "organization"]
+        update_data = {k: v for k, v in profile_data.items() if k in allowed_fields}
+        
+        if update_data:
+            await UserDatabase.update_user(current_user["id"], update_data)
+            return {"success": True, "message": "Profile updated"}
+        else:
+            raise HTTPException(status_code=400, detail="No valid fields to update")
+    except Exception as e:
+        logger.error(f"Profile update error: {e}")
+        raise HTTPException(status_code=500, detail="Profile update failed")
+
+# Scanning endpoints
 @app.post("/api/scan/email")
 async def scan_email(scan_request: EmailScanRequest, current_user = Depends(get_current_user)):
     try:
-        # Simple email scan
-        scan_result = simple_email_scan(scan_request.dict())
+        # Simple validation
+        email_data = {
+            "email_subject": scan_request.email_subject[:500],
+            "email_body": scan_request.email_body[:5000],
+            "sender": scan_request.sender[:200],
+            "recipient": scan_request.recipient[:200] if scan_request.recipient else ""
+        }
         
-        # Store scan result
+        # Scan email
+        result = simple_email_scan(email_data)
+        
+        # Store result
         scan_data = {
             "id": str(uuid.uuid4()),
             "user_id": current_user["id"],
-            "email_subject": scan_request.email_subject,
-            "sender": scan_request.sender,
-            "recipient": scan_request.recipient,
-            "scan_result": scan_result["status"],
-            "risk_score": scan_result["risk_score"],
-            "explanation": scan_result["explanation"],
-            "threats": scan_result["threats"],
+            "email_subject": email_data["email_subject"],
+            "sender": email_data["sender"],
+            "scan_result": result["status"],
+            "risk_score": result["risk_score"],
+            "explanation": result["explanation"],
             "created_at": datetime.utcnow()
         }
         
@@ -264,11 +296,14 @@ async def scan_email(scan_request: EmailScanRequest, current_user = Depends(get_
         
         return {
             "id": scan_data["id"],
-            "status": scan_result["status"],
-            "risk_score": scan_result["risk_score"],
-            "explanation": scan_result["explanation"],
-            "threats": scan_result["threats"]
+            "status": result["status"],
+            "risk_score": result["risk_score"],
+            "explanation": result["explanation"],
+            "threat_sources": result["threats"],
+            "detected_threats": result["threats"],
+            "recommendations": ["Be cautious with this email"] if result["threats"] else ["Email appears safe"]
         }
+        
     except Exception as e:
         logger.error(f"Email scan error: {e}")
         raise HTTPException(status_code=500, detail="Email scan failed")
@@ -276,17 +311,17 @@ async def scan_email(scan_request: EmailScanRequest, current_user = Depends(get_
 @app.post("/api/scan/link")
 async def scan_link(scan_request: LinkScanRequest, current_user = Depends(get_current_user)):
     try:
-        # Simple link scan
-        scan_result = simple_link_scan(scan_request.url)
+        result = simple_link_scan(scan_request.url)
         
         return {
             "url": scan_request.url,
-            "status": scan_result["status"],
-            "risk_score": scan_result["risk_score"],
-            "explanation": scan_result["explanation"],
-            "threats": scan_result["threats"],
-            "is_shortened": scan_result["is_shortened"]
+            "status": result["status"],
+            "risk_score": result["risk_score"],
+            "explanation": result["explanation"],
+            "threat_categories": result["threats"],
+            "is_shortened": result["is_shortened"]
         }
+        
     except Exception as e:
         logger.error(f"Link scan error: {e}")
         raise HTTPException(status_code=500, detail="Link scan failed")
