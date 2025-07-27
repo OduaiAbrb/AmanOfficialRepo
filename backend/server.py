@@ -360,6 +360,39 @@ async def get_recent_emails(current_user = Depends(get_current_user)):
         logger.error(f"Recent emails error: {e}")
         return {"recent_scans": []}
 
+# Settings endpoints
+@app.get("/api/user/settings")
+async def get_settings(current_user = Depends(get_current_user)):
+    try:
+        settings = await SettingsDatabase.get_user_settings(current_user["id"])
+        default_settings = {
+            "email_notifications": True,
+            "real_time_scanning": True,
+            "threat_alerts": True,
+            "weekly_reports": False,
+            "scan_attachments": True
+        }
+        default_settings.update(settings or {})
+        return {"settings": default_settings}
+    except Exception as e:
+        logger.error(f"Settings error: {e}")
+        return {"settings": {"email_notifications": True, "real_time_scanning": True, "threat_alerts": True}}
+
+@app.put("/api/user/settings")
+async def update_settings(settings_data: dict, current_user = Depends(get_current_user)):
+    try:
+        allowed = ["email_notifications", "real_time_scanning", "threat_alerts", "weekly_reports", "scan_attachments"]
+        settings = {k: bool(v) for k, v in settings_data.items() if k in allowed}
+        
+        if settings:
+            await SettingsDatabase.update_user_settings(current_user["id"], settings)
+            return {"success": True, "message": "Settings updated"}
+        else:
+            raise HTTPException(status_code=400, detail="No valid settings")
+    except Exception as e:
+        logger.error(f"Settings update error: {e}")
+        raise HTTPException(status_code=500, detail="Settings update failed")
+
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("server_simple:app", host="0.0.0.0", port=8001, reload=True)
+    uvicorn.run("server:app", host="0.0.0.0", port=8001, reload=True)
