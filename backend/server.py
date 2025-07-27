@@ -420,7 +420,8 @@ async def get_recent_emails(
         emails = []
         for scan in recent_scans:
             # Calculate time ago
-            time_diff = datetime.utcnow() - scan.scanned_at
+            created_at = scan.get("created_at", datetime.utcnow())
+            time_diff = datetime.utcnow() - created_at
             if time_diff.days > 0:
                 time_str = f"{time_diff.days} day{'s' if time_diff.days > 1 else ''} ago"
             elif time_diff.seconds > 3600:
@@ -433,12 +434,12 @@ async def get_recent_emails(
                 time_str = "Just now"
             
             emails.append(RecentEmailScan(
-                id=scan.id,
-                subject=scan.email_subject,
-                sender=scan.sender,
+                id=str(scan.get("_id", "")),
+                subject=scan.get("email_subject", ""),
+                sender=scan.get("sender", ""),
                 time=time_str,
-                status=scan.scan_result,
-                risk_score=scan.risk_score
+                status=scan.get("scan_result", ""),
+                risk_score=scan.get("risk_score", 0.0)
             ))
         
         return {"emails": emails}
