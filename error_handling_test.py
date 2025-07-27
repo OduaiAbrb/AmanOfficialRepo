@@ -479,5 +479,6 @@ if __name__ == "__main__":
         print(f"\n🎯 Backend error handling is working well ({success_rate:.1f}% success rate)")
         sys.exit(0)
     else:
-        print(f"\n⚠️  Backend error handling needs attention ({success_rate:.1f}% success rate)")
+        rate_display = f"{success_rate:.1f}%" if success_rate is not None else "N/A"
+        print(f"\n⚠️  Backend error handling needs attention ({rate_display} success rate)")
         sys.exit(1)
