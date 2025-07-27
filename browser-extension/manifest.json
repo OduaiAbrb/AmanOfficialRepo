@@ -14,7 +14,7 @@
     "https://outlook.live.com/*",
     "https://outlook.office.com/*",
     "https://outlook.office365.com/*",
-    "https://859201a4-6ec0-482a-aafb-51101591fb03.preview.emergentagent.com/*"
+    "https://f8e0a18c-634d-449c-bde8-c523f13f683c.preview.emergentagent.com/*"
   ],
   "content_scripts": [
     {
@@ -61,7 +61,7 @@
   ],
   "externally_connectable": {
     "matches": [
-      "https://859201a4-6ec0-482a-aafb-51101591fb03.preview.emergentagent.com/*"
+      "https://f8e0a18c-634d-449c-bde8-c523f13f683c.preview.emergentagent.com/*"
     ]
   }
 }
