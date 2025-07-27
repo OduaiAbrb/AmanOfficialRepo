@@ -1,12 +1,13 @@
 """
-Database connection module for Aman Cybersecurity Platform
+Database connection module for Aman Cybersecurity Platform - COMPLETE VERSION
 """
 import os
 import logging
-from typing import Optional
+from typing import Optional, List, Dict, Any
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 from pymongo.errors import ConnectionFailure
-from datetime import datetime
+from datetime import datetime, timedelta
+
 logger = logging.getLogger(__name__)
 
 class Database:
@@ -19,8 +20,6 @@ db_instance = Database()
 async def connect_to_mongo():
     """Create database connection"""
     try:
-
-
         mongo_url = os.getenv("MONGO_URL", "mongodb://localhost:27017")
         
         # Create client
@@ -50,11 +49,7 @@ async def close_mongo_connection():
 
 def get_database() -> Optional[AsyncIOMotorDatabase]:
     """Get database instance"""
-    if db_instance.database is None:
-        print("⚠️ Database not connected")
-        return None
     return db_instance.database
-
 
 # Collection helper classes
 class UserDatabase:
@@ -63,7 +58,6 @@ class UserDatabase:
         db = get_database()
         if db is None:
             raise Exception("Database not connected")
-
         
         result = await db.users.insert_one(user_data)
         user_data["_id"] = result.inserted_id
@@ -76,7 +70,6 @@ class UserDatabase:
             return None
         
         return await db.users.find_one({"email": email})
-
     
     @staticmethod
     async def get_user_by_id(user_id: str):
@@ -84,9 +77,7 @@ class UserDatabase:
         if db is None:
             return None
         
-
         return await db.users.find_one({"id": user_id})
-
     
     @staticmethod
     async def update_user(user_id: str, update_data: dict):
@@ -97,6 +88,23 @@ class UserDatabase:
         update_data["updated_at"] = datetime.utcnow()
         result = await db.users.update_one({"id": user_id}, {"$set": update_data})
         return result.modified_count > 0
+
+    @staticmethod
+    async def get_all_users(skip: int = 0, limit: int = 50):
+        db = get_database()
+        if db is None:
+            return []
+        
+        cursor = db.users.find({}).skip(skip).limit(limit)
+        return await cursor.to_list(limit)
+
+    @staticmethod
+    async def get_users_count():
+        db = get_database()
+        if db is None:
+            return 0
+        
+        return await db.users.count_documents({})
 
 class EmailScanDatabase:
     @staticmethod
@@ -135,10 +143,8 @@ class EmailScanDatabase:
                 "$group": {
                     "_id": None,
                     "total_scans": {"$sum": 1},
-
                     "threats_blocked": {
                         "$sum": {"$cond": [{"$in": ["$scan_result", ["potential_phishing", "phishing"]]}, 1, 0]}
-
                     },
                     "safe_emails": {
                         "$sum": {"$cond": [{"$eq": ["$scan_result", "safe"]}, 1, 0]}
@@ -151,8 +157,24 @@ class EmailScanDatabase:
         if result:
             return result[0]
         else:
-
             return {"total_scans": 0, "threats_blocked": 0, "safe_emails": 0}
+
+    @staticmethod
+    async def get_all_scans(skip: int = 0, limit: int = 50):
+        db = get_database()
+        if db is None:
+            return []
+        
+        cursor = db.email_scans.find({}).sort("created_at", -1).skip(skip).limit(limit)
+        return await cursor.to_list(limit)
+
+    @staticmethod
+    async def get_scans_count():
+        db = get_database()
+        if db is None:
+            return 0
+        
+        return await db.email_scans.count_documents({})
 
 class SettingsDatabase:
     @staticmethod
@@ -183,6 +205,270 @@ class SettingsDatabase:
         )
         return True
 
+class ThreatDatabase:
+    """Database operations for threat management"""
+    
+    @staticmethod
+    async def create_threat_log(threat_data: dict):
+        db = get_database()
+        if db is None:
+            raise Exception("Database not connected")
+        
+        threat_data["created_at"] = datetime.utcnow()
+        result = await db.threat_logs.insert_one(threat_data)
+        threat_data["_id"] = result.inserted_id
+        return threat_data
+    
+    @staticmethod
+    async def get_threat_logs(limit: int = 100):
+        db = get_database()
+        if db is None:
+            return []
+        
+        cursor = db.threat_logs.find({}).sort("created_at", -1).limit(limit)
+        return await cursor.to_list(limit)
+    
+    @staticmethod
+    async def get_threat_stats():
+        db = get_database()
+        if db is None:
+            return {"total_threats": 0, "today_threats": 0}
+        
+        today = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        
+        total_threats = await db.threat_logs.count_documents({})
+        today_threats = await db.threat_logs.count_documents({"created_at": {"$gte": today}})
+        
+        return {"total_threats": total_threats, "today_threats": today_threats}
+
+    @staticmethod
+    async def store_domain_reputation(domain: str, reputation_data: dict):
+        db = get_database()
+        if db is None:
+            return False
+        
+        reputation_data.update({
+            "domain": domain,
+            "updated_at": datetime.utcnow()
+        })
+        
+        await db.domain_reputation.update_one(
+            {"domain": domain},
+            {"$set": reputation_data},
+            upsert=True
+        )
+        return True
+
+    @staticmethod
+    async def get_domain_reputation(domain: str):
+        db = get_database()
+        if db is None:
+            return None
+        
+        return await db.domain_reputation.find_one({"domain": domain})
+
+class FeedbackDatabase:
+    """Database operations for user feedback"""
+    
+    @staticmethod
+    async def create_feedback(feedback_data: dict):
+        db = get_database()
+        if db is None:
+            raise Exception("Database not connected")
+        
+        feedback_data["created_at"] = datetime.utcnow()
+        result = await db.feedback.insert_one(feedback_data)
+        feedback_data["_id"] = result.inserted_id
+        return feedback_data
+    
+    @staticmethod
+    async def get_user_feedback(user_id: str, limit: int = 50):
+        db = get_database()
+        if db is None:
+            return []
+        
+        cursor = db.feedback.find({"user_id": user_id}).sort("created_at", -1).limit(limit)
+        return await cursor.to_list(limit)
+    
+    @staticmethod
+    async def get_feedback_analytics():
+        db = get_database()
+        if db is None:
+            return {"total_feedback": 0, "positive_feedback": 0, "negative_feedback": 0}
+        
+        pipeline = [
+            {
+                "$group": {
+                    "_id": None,
+                    "total_feedback": {"$sum": 1},
+                    "positive_feedback": {
+                        "$sum": {"$cond": [{"$gte": ["$rating", 4]}, 1, 0]}
+                    },
+                    "negative_feedback": {
+                        "$sum": {"$cond": [{"$lte": ["$rating", 2]}, 1, 0]}
+                    }
+                }
+            }
+        ]
+        
+        result = await db.feedback.aggregate(pipeline).to_list(1)
+        if result:
+            return result[0]
+        else:
+            return {"total_feedback": 0, "positive_feedback": 0, "negative_feedback": 0}
+
+class AICostDatabase:
+    """Database operations for AI cost management"""
+    
+    @staticmethod
+    async def record_ai_usage(usage_data: dict):
+        db = get_database()
+        if db is None:
+            raise Exception("Database not connected")
+        
+        usage_data["created_at"] = datetime.utcnow()
+        result = await db.ai_usage.insert_one(usage_data)
+        usage_data["_id"] = result.inserted_id
+        return usage_data
+    
+    @staticmethod
+    async def get_ai_usage_stats(start_date: datetime = None, end_date: datetime = None):
+        db = get_database()
+        if db is None:
+            return {"total_requests": 0, "total_cost": 0.0, "total_tokens": 0}
+        
+        match_filter = {}
+        if start_date and end_date:
+            match_filter["created_at"] = {"$gte": start_date, "$lte": end_date}
+        
+        pipeline = [
+            {"$match": match_filter},
+            {
+                "$group": {
+                    "_id": None,
+                    "total_requests": {"$sum": 1},
+                    "total_cost": {"$sum": "$cost"},
+                    "total_tokens": {"$sum": "$tokens_used"}
+                }
+            }
+        ]
+        
+        result = await db.ai_usage.aggregate(pipeline).to_list(1)
+        if result:
+            return result[0]
+        else:
+            return {"total_requests": 0, "total_cost": 0.0, "total_tokens": 0}
+    
+    @staticmethod
+    async def get_user_ai_usage(user_id: str):
+        db = get_database()
+        if db is None:
+            return {"total_requests": 0, "total_cost": 0.0, "total_tokens": 0}
+        
+        pipeline = [
+            {"$match": {"user_id": user_id}},
+            {
+                "$group": {
+                    "_id": None,
+                    "total_requests": {"$sum": 1},
+                    "total_cost": {"$sum": "$cost"},
+                    "total_tokens": {"$sum": "$tokens_used"}
+                }
+            }
+        ]
+        
+        result = await db.ai_usage.aggregate(pipeline).to_list(1)
+        if result:
+            return result[0]
+        else:
+            return {"total_requests": 0, "total_cost": 0.0, "total_tokens": 0}
+
+class AdminDatabase:
+    """Database operations for admin functionality"""
+    
+    @staticmethod
+    async def create_admin_action(action_data: dict):
+        db = get_database()
+        if db is None:
+            raise Exception("Database not connected")
+        
+        action_data["created_at"] = datetime.utcnow()
+        result = await db.admin_actions.insert_one(action_data)
+        action_data["_id"] = result.inserted_id
+        return action_data
+    
+    @staticmethod
+    async def get_admin_actions(limit: int = 50):
+        db = get_database()
+        if db is None:
+            return []
+        
+        cursor = db.admin_actions.find({}).sort("created_at", -1).limit(limit)
+        return await cursor.to_list(limit)
+    
+    @staticmethod
+    async def get_system_stats():
+        db = get_database()
+        if db is None:
+            return {
+                "total_users": 0,
+                "total_scans": 0,
+                "total_threats": 0,
+                "active_users": 0
+            }
+        
+        # Get basic counts
+        total_users = await db.users.count_documents({})
+        total_scans = await db.email_scans.count_documents({})
+        total_threats = await db.threat_logs.count_documents({})
+        
+        # Get active users (logged in last 30 days)
+        thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+        active_users = await db.users.count_documents({
+            "last_login": {"$gte": thirty_days_ago}
+        })
+        
+        return {
+            "total_users": total_users,
+            "total_scans": total_scans,
+            "total_threats": total_threats,
+            "active_users": active_users
+        }
+
+    @staticmethod
+    async def get_user_management_data(skip: int = 0, limit: int = 50):
+        db = get_database()
+        if db is None:
+            return {"users": [], "total_count": 0}
+        
+        users = await UserDatabase.get_all_users(skip, limit)
+        total_count = await UserDatabase.get_users_count()
+        
+        return {"users": users, "total_count": total_count}
+
+    @staticmethod
+    async def update_user_status(user_id: str, is_active: bool):
+        db = get_database()
+        if db is None:
+            return False
+        
+        result = await db.users.update_one(
+            {"id": user_id},
+            {"$set": {"is_active": is_active, "updated_at": datetime.utcnow()}}
+        )
+        return result.modified_count > 0
+
+    @staticmethod
+    async def update_user_role(user_id: str, role: str):
+        db = get_database()
+        if db is None:
+            return False
+        
+        result = await db.users.update_one(
+            {"id": user_id},
+            {"$set": {"role": role, "updated_at": datetime.utcnow()}}
+        )
+        return result.modified_count > 0
 
 # Initialize collections function
 async def init_collections():
@@ -199,20 +485,25 @@ async def init_collections():
         await db.email_scans.create_index("user_id", background=True)
         await db.email_scans.create_index("created_at", background=True)
         await db.user_settings.create_index("user_id", unique=True, background=True)
+        await db.threat_logs.create_index("created_at", background=True)
+        await db.feedback.create_index("user_id", background=True)
+        await db.ai_usage.create_index("user_id", background=True)
+        await db.ai_usage.create_index("created_at", background=True)
+        await db.admin_actions.create_index("created_at", background=True)
+        await db.domain_reputation.create_index("domain", unique=True, background=True)
         
         # Create collections if they don't exist
         collections = await db.list_collection_names()
         
-        if "users" not in collections:
-            await db.create_collection("users")
-        if "email_scans" not in collections:
-            await db.create_collection("email_scans")
-        if "user_settings" not in collections:
-            await db.create_collection("user_settings")
-        if "ai_usage" not in collections:
-            await db.create_collection("ai_usage")
-        if "ai_cache" not in collections:
-            await db.create_collection("ai_cache")
+        required_collections = [
+            "users", "email_scans", "user_settings", "threat_logs",
+            "feedback", "ai_usage", "admin_actions", "domain_reputation",
+            "ai_cache", "organizations"
+        ]
+        
+        for collection_name in required_collections:
+            if collection_name not in collections:
+                await db.create_collection(collection_name)
         
         logger.info("✅ Database collections initialized successfully")
         
@@ -220,3 +511,47 @@ async def init_collections():
         logger.error(f"❌ Failed to initialize collections: {e}")
         # Don't raise, just log the error for development
 
+# Helper functions for database operations
+async def cleanup_expired_data():
+    """Clean up expired data from database"""
+    try:
+        db = get_database()
+        if db is None:
+            return
+        
+        # Clean old AI cache (older than 7 days)
+        seven_days_ago = datetime.utcnow() - timedelta(days=7)
+        await db.ai_cache.delete_many({"created_at": {"$lt": seven_days_ago}})
+        
+        # Clean old admin actions (older than 90 days)
+        ninety_days_ago = datetime.utcnow() - timedelta(days=90)
+        await db.admin_actions.delete_many({"created_at": {"$lt": ninety_days_ago}})
+        
+        logger.info("✅ Database cleanup completed")
+        
+    except Exception as e:
+        logger.error(f"❌ Database cleanup failed: {e}")
+
+async def get_database_stats():
+    """Get overall database statistics"""
+    try:
+        db = get_database()
+        if db is None:
+            return {}
+        
+        stats = {}
+        collections = ["users", "email_scans", "threat_logs", "feedback", "ai_usage"]
+        
+        for collection in collections:
+            count = await db[collection].count_documents({})
+            stats[collection] = count
+        
+        return stats
+        
+    except Exception as e:
+        logger.error(f"❌ Failed to get database stats: {e}")
+        return {}
+
+# Log database setup
+logger.info("🗄️ Database module loaded with all required classes")
+print("✅ Database Classes: UserDatabase, EmailScanDatabase, SettingsDatabase, ThreatDatabase, FeedbackDatabase, AICostDatabase, AdminDatabase")
