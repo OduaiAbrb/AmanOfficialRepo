@@ -455,7 +455,7 @@ class ErrorHandlingTester:
         print("📊 ERROR HANDLING TEST RESULTS SUMMARY")
         print("=" * 80)
         
-        success_rate = (passed / total) * 100
+        success_rate = (passed / total) * 100 if total > 0 else 0
         print(f"✅ Tests Passed: {passed}/{total} ({success_rate:.1f}%)")
         
         if passed == total:
