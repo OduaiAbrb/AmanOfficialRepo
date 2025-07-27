@@ -271,7 +271,7 @@ export const AuthProvider = ({ children }) => {
   // Update user settings
   const updateUserSettings = async (settings) => {
     try {
-      const response = await axios.put(`${backendUrl}/api/user/settings`, settings);
+      const response = await axios.put(`${backendUrl}/user/settings`, settings);
       
       if (response.status === 200) {
         return { success: true, message: 'Settings updated successfully' };
